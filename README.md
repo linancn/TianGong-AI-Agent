@@ -1,6 +1,22 @@
 
 # TianGong Agent
 
+- [TianGong Agent](#tiangong-agent)
+  - [Env Preparing](#env-preparing)
+    - [Using VSCode Dev Contariners](#using-vscode-dev-contariners)
+    - [Local Env](#local-env)
+  - [Key Configurations](#key-configurations)
+    - [OpenAI API key](#openai-api-key)
+    - [Pinecone](#pinecone)
+    - [Xata](#xata)
+    - [LLM model](#llm-model)
+    - [Password (optional)](#password-optional)
+  - [Customorize your own UI](#customorize-your-own-ui)
+  - [Start locally](#start-locally)
+    - [Auto Build](#auto-build)
+    - [Production Run](#production-run)
+  - [Deployment](#deployment)
+
 ## Env Preparing
 
 ### Using VSCode Dev Contariners
@@ -47,7 +63,25 @@ Install Cuda (optional):
 sudo apt install nvidia-cuda-toolkit
 ```
 
-## Start
+## Key Configurations
+
+### OpenAI API key
+
+### Pinecone
++ API key
++ Environment
++ Index
+
+### Xata
++ API key
++ Database url
+### LLM model
+
+### Password (optional)
+
+## Customorize your own UI
+./src/ui/tiangong-en.py
+## Start locally
 
 ```bash
 export ui=tiangong-en
@@ -84,5 +118,5 @@ docker run --detach \
     image:tag
 ```
 
-## To Do
-
+## Deployment
+Steamlit cloud: https://docs.streamlit.io/streamlit-community-cloud/deploy-your-app
