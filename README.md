@@ -119,4 +119,5 @@ docker run --detach \
 ```
 
 ## Deployment
-Steamlit cloud: https://docs.streamlit.io/streamlit-community-cloud/deploy-your-app
+For deploying this project, we recommend using Streamlit. Streamlit provides an intuitive way to turn data scripts into shareable web applications. If you're unfamiliar with Streamlit or need guidance on deploying your app, refer to their official documentation:
+[Steamlit APP Deploy](https://docs.streamlit.io/streamlit-community-cloud/deploy-your-app)
