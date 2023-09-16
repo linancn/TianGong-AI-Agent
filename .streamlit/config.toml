@@ -1,0 +1,12 @@
+[theme]
+base = "dark"
+primaryColor = "#82318E"
+
+[browser]
+gatherUsageStats = false
+
+[global]
+dataFrameSerialization = "arrow"
+
+[server]
+enableStaticServing = true

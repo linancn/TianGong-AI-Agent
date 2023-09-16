@@ -1,0 +1,17 @@
+__pycache__/
+
+.venv/
+
+.git/
+
+.vscode/
+
+.dockerignore
+
+.gitignore
+
+Dockerfile
+
+README.md
+
+buffer/
