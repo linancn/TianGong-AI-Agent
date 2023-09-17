@@ -85,16 +85,14 @@ if auth:
         with st.expander(ui.sidebar_expander_title):
             txt2audio = st.checkbox(ui.txt2audio_checkbox_label, value=False)
             chat_memory = st.checkbox(ui.chat_memory_checkbox_label, value=False)
-
-        search_docs = st.checkbox(ui.upload_docs_checkbox_label, value=True)
+            search_docs = st.checkbox(ui.upload_docs_checkbox_label, value=False)
 
         if search_docs:
-            uploaded_files = st.sidebar.file_uploader(
-                ui.sidebar_file_uploader_title,
+            uploaded_files = st.file_uploader(
+                label=ui.sidebar_file_uploader_title,
                 accept_multiple_files=True,
                 type=None,
             )
-
             if uploaded_files != [] and uploaded_files != st.session_state.get(
                 "uploaded_files"
             ):
@@ -123,6 +121,9 @@ if auth:
                 st.markdown(response)
                 if txt2audio:
                     show_audio_player(response)
+                st.session_state["messages"].append(
+                    {"role": "user", "content": user_query}
+                )
                 st.session_state["messages"].append(
                     {
                         "role": "assistant",

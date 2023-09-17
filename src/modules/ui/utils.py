@@ -44,7 +44,7 @@ def display_msg(msg, author):
         msg (str): message to display
         author (str): author of the message -user/assistant
     """
-    st.session_state["messages"].append({"role": author, "content": msg})
+    # st.session_state["messages"].append({"role": author, "content": msg})
     st.chat_message(author).markdown(msg)
 
 
