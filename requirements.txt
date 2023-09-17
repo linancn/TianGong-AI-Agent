@@ -9,7 +9,7 @@ openai
 pandas
 pdfplumber
 pinecone-client
-streamlit==1.25.0
+streamlit
 tenacity
 tiktoken
 unstructured[local-inference]
