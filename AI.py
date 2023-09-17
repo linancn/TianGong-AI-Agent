@@ -103,7 +103,7 @@ if auth:
                     (
                         st.session_state["doc_chucks"],
                         st.session_state["faiss_db"],
-                    ) = tools.get_fass_db(uploaded_files)
+                    ) = tools.get_faiss_db(uploaded_files)
 
     @utils.enable_chat_history
     def main():

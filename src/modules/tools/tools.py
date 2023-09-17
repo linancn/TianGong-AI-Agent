@@ -790,7 +790,7 @@ search_wiki_tool = StructuredTool.from_function(search_wiki)
 # ##############################
 # search_uploaded_docs_tool
 # ##############################
-def get_fass_db(uploaded_files):
+def get_faiss_db(uploaded_files):
     text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=220, chunk_overlap=20
     )
