@@ -27,9 +27,9 @@ def enable_chat_history(func):
         ]
     for msg in st.session_state["messages"]:
         if msg["role"] == "user":
-            st.chat_message(msg["role"]).write(msg["content"])
+            st.chat_message(msg["role"]).markdown(msg["content"])
         elif msg["role"] == "assistant":
-            st.chat_message(msg["role"], avatar=msg["avatar"]).write(msg["content"])
+            st.chat_message(msg["role"], avatar=msg["avatar"]).markdown(msg["content"])
 
     def execute(*args, **kwargs):
         func(*args, **kwargs)
@@ -44,8 +44,8 @@ def display_msg(msg, author):
         msg (str): message to display
         author (str): author of the message -user/assistant
     """
-    st.session_state.messages.append({"role": author, "content": msg})
-    st.chat_message(author).write(msg)
+    st.session_state["messages"].append({"role": author, "content": msg})
+    st.chat_message(author).markdown(msg)
 
 
 # ##############################

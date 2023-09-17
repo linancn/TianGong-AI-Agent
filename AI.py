@@ -120,7 +120,7 @@ if auth:
                     },
                     callbacks=[st_cb],
                 )
-                st.write(response)
+                st.markdown(response)
                 if txt2audio:
                     show_audio_player(response)
                 st.session_state["messages"].append(
