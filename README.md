@@ -68,25 +68,32 @@ sudo apt install nvidia-cuda-toolkit
 ### OpenAI API key
 
 ### Pinecone
-+ API key
-+ Environment
-+ Index
+
+- API key
+
+- Environment
+- Index
 
 ### Xata
-+ API key
-+ Database url
+
+- API key
+- Database url
+
 ### LLM model
 
 ### Password (optional)
 
 ## Customorize your own UI
+
 ./src/ui/tiangong-en.py
+
 ## Start locally
 
 ```bash
 export ui=tiangong-en
 streamlit run AI.py
 ```
+
 Or Using VsCode Debug Streamlit Config
 
 ### Auto Build
@@ -119,5 +126,6 @@ docker run --detach \
 ```
 
 ## Deployment
+
 For deploying a prototype of this project, we recommend using Streamlit. Streamlit provides an intuitive way to turn data scripts into shareable web applications. If you're unfamiliar with Streamlit or need guidance on deploying your app, refer to their official documentation:
 [Steamlit APP Deploy](https://docs.streamlit.io/streamlit-community-cloud/deploy-your-app)
