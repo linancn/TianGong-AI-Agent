@@ -39,25 +39,25 @@ if auth:
         st.subheader(ui.sidebar_subheader)
     
     with st.expander(ui.sidebar_expander_title):
-            # txt2audio = st.checkbox(ui.txt2audio_checkbox_label, value=False)
-            # chat_memory = st.checkbox(ui.chat_memory_checkbox_label, value=False)
-            search_docs = st.checkbox(ui.upload_docs_checkbox_label, value=False)
+        # txt2audio = st.checkbox(ui.txt2audio_checkbox_label, value=False)
+        # chat_memory = st.checkbox(ui.chat_memory_checkbox_label, value=False)
+        search_docs = st.toggle(ui.upload_docs_checkbox_label, value=False)
 
-    if search_docs:
-        uploaded_files = st.file_uploader(
-            label=ui.sidebar_file_uploader_title,
-            accept_multiple_files=True,
-            type=None,
-        )
-        if uploaded_files != [] and uploaded_files != st.session_state.get(
-            "uploaded_files"
-        ):
-            st.session_state["uploaded_files"] = uploaded_files
-            with st.spinner(ui.sidebar_file_uploader_spinner):
-                (
-                    st.session_state["doc_chucks"],
-                    st.session_state["faiss_db"],
-                ) = tools.get_faiss_db(uploaded_files)
+        if search_docs:
+            uploaded_files = st.file_uploader(
+                label=ui.sidebar_file_uploader_title,
+                accept_multiple_files=True,
+                type=None,
+            )
+            if uploaded_files != [] and uploaded_files != st.session_state.get(
+                "uploaded_files"
+            ):
+                st.session_state["uploaded_files"] = uploaded_files
+                with st.spinner(ui.sidebar_file_uploader_spinner):
+                    (
+                        st.session_state["doc_chucks"],
+                        st.session_state["faiss_db"],
+                    ) = tools.get_faiss_db(uploaded_files)
 
     @utils.enable_chat_history
     def main():
