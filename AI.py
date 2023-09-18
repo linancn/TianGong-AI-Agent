@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 from langchain.callbacks import StreamlitCallbackHandler
 
@@ -7,6 +8,9 @@ import src.modules.ui.utils as utils
 from src.modules.agents.agent_selector import main_agent
 
 ui = ui_config.create_ui_from_config()
+
+os.environ["XATA_API_KEY"] = st.secrets["xata_api_key"]
+os.environ["XATA_DATABASE_URL"] = st.secrets["xata_db_url"]
 
 st.set_page_config(page_title=ui.page_title, layout="wide", page_icon=ui.page_icon)
 
@@ -37,7 +41,17 @@ if auth:
         with col_text:
             st.title(ui.sidebar_title)
         st.subheader(ui.sidebar_subheader)
-    
+
+        table_map = utils.fetch_chat_history()
+        entries = list(table_map.keys())
+        current_chat = st.selectbox(
+            label=ui.current_chat_title,
+            options=entries,
+            format_func=lambda x: table_map[x],
+            index=0,
+        )
+        st.session_state["current_chat"] = current_chat
+
     with st.expander(ui.sidebar_expander_title):
         # txt2audio = st.checkbox(ui.txt2audio_checkbox_label, value=False)
         # chat_memory = st.checkbox(ui.chat_memory_checkbox_label, value=False)

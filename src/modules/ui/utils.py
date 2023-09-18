@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from io import BytesIO
 
 import streamlit as st
@@ -7,6 +8,7 @@ from langchain.chains.openai_functions import create_structured_output_chain
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain.schema import HumanMessage, SystemMessage
+from xata.client import XataClient
 
 import src.modules.ui.ui_config as ui_config
 from src.modules.agents.agent_history import chat_history
@@ -179,6 +181,7 @@ def gTTS_text_language_func_calling_chain():
 
     return func_calling_chain
 
+
 def show_audio_player(ai_content: str) -> None:
     query_response = gTTS_text_language_func_calling_chain().run(ai_content)
     language = query_response.get("language")
@@ -189,3 +192,19 @@ def show_audio_player(ai_content: str) -> None:
         st.audio(sound_file)
     except gTTSError as err:
         st.error(err)
+
+
+def fetch_chat_history():
+    """Fetch the chat history."""
+    client = XataClient()
+    response = client.sql().query(
+        'SELECT DISTINCT ON ("sessionId") "sessionId", "content" FROM "tiangong_memory" ORDER BY "sessionId", "xata.createdAt" ASC, "content" ASC'
+    )
+    records = response["records"]
+    for record in records:
+        timestamp = float(record["sessionId"])
+        record["entry"] = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S") + " - " + record["content"]
+
+    table_map = {item["sessionId"]: item["entry"] for item in records}
+
+    return table_map

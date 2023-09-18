@@ -97,6 +97,7 @@ ui_data = {
     "sidebar_file_uploader_title": "Documents to analyze:",
     "sidebar_file_uploader_spinner": "Analyzing...",
     "sidebar_file_uploader_error": "None of the files can be analyzed, please check the format!",
+    "current_chat_title": "Chat History :",
     "chat_ai_avatar": "static/logo.png",
     "chat_ai_welcome": "How can I help you?",
     "chat_ai_spinner": "In progress...",
