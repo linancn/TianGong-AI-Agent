@@ -7,11 +7,11 @@ from gtts import gTTS, gTTSError
 from langchain.chains.openai_functions import create_structured_output_chain
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
-from langchain.schema import HumanMessage, SystemMessage
+from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from xata.client import XataClient
 
 import src.modules.ui.ui_config as ui_config
-from src.modules.agents.agent_history import chat_history
+from src.modules.agents.agent_history import xata_chat_history
 
 ui = ui_config.create_ui_from_config()
 
@@ -19,7 +19,7 @@ ui = ui_config.create_ui_from_config()
 # decorator
 def enable_chat_history(func):
     if "history" not in st.session_state:
-        st.session_state["history"] = chat_history(_session_id=str(time.time()))
+        st.session_state["history"] = xata_chat_history(_session_id=str(time.time()))
     # to show chat history on ui
     if "messages" not in st.session_state:
         st.session_state["messages"] = [
@@ -198,13 +198,28 @@ def fetch_chat_history():
     """Fetch the chat history."""
     client = XataClient()
     response = client.sql().query(
-        'SELECT DISTINCT ON ("sessionId") "sessionId", "content" FROM "tiangong_memory" ORDER BY "sessionId", "xata.createdAt" ASC, "content" ASC'
+        'SELECT "sessionId", "content" FROM (SELECT DISTINCT ON ("sessionId") "sessionId", "xata.createdAt", "content" FROM "tiangong_memory" ORDER BY "sessionId", "xata.createdAt" ASC, "content" ASC) AS subquery ORDER BY "xata.createdAt" DESC'
     )
     records = response["records"]
     for record in records:
         timestamp = float(record["sessionId"])
-        record["entry"] = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S") + " - " + record["content"]
+        record["entry"] = (
+            datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+            + " - "
+            + record["content"]
+        )
 
     table_map = {item["sessionId"]: item["entry"] for item in records}
 
     return table_map
+
+
+def convert_history_to_message(history):
+    if isinstance(history, HumanMessage):
+        return {"role": "user", "content": history.content}
+    elif isinstance(history, AIMessage):
+        return {
+            "role": "assistant",
+            "avatar": ui.chat_ai_avatar,
+            "content": history.content,
+        }
