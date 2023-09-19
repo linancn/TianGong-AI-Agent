@@ -1,4 +1,7 @@
 import os
+import time
+from datetime import datetime
+
 import streamlit as st
 from langchain.callbacks import StreamlitCallbackHandler
 
@@ -6,6 +9,7 @@ import src.modules.tools.tools as tools
 import src.modules.ui.ui_config as ui_config
 import src.modules.ui.utils as utils
 from src.modules.agents.agent_selector import main_agent
+from src.modules.agents.agent_history import xata_chat_history
 
 ui = ui_config.create_ui_from_config()
 
@@ -43,14 +47,45 @@ if auth:
         st.subheader(ui.sidebar_subheader)
 
         table_map = utils.fetch_chat_history()
+        if "first_run" not in st.session_state:
+            timestamp = time.time()
+            st.session_state["timestamp"] = timestamp
+        else:
+            timestamp = st.session_state["timestamp"]
+        table_map_new = {
+            str(timestamp): datetime.fromtimestamp(timestamp).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+            + " - New Chat"
+        }
+        table_map = table_map_new | table_map
         entries = list(table_map.keys())
-        current_chat = st.selectbox(
+        # Check if selected_chat_id exists in session_state, if not set default as the first entry
+        if "selected_chat_id" not in st.session_state:
+            st.session_state["selected_chat_id"] = entries[0]
+
+        # Update the selectbox with the current selected_chat_id value
+        current_chat_id = st.selectbox(
             label=ui.current_chat_title,
             options=entries,
             format_func=lambda x: table_map[x],
-            index=0,
+            # index=entries.index(
+            #     st.session_state["selected_chat_id"]
+            # ),  # Use the saved value's index
         )
-        st.session_state["current_chat"] = current_chat
+
+        # Save the selected value back to session state
+        st.session_state["selected_chat_id"] = current_chat_id
+
+        if "first_run" not in st.session_state:
+            st.session_state["history"] = xata_chat_history(_session_id=current_chat_id)
+            st.session_state["first_run"] = True
+        else:
+            st.session_state["history"] = xata_chat_history(_session_id=current_chat_id)
+            messages_list = st.session_state["history"].messages
+            st.session_state["messages"] = [
+                utils.convert_history_to_message(message) for message in messages_list
+            ]
 
     with st.expander(ui.sidebar_expander_title):
         # txt2audio = st.checkbox(ui.txt2audio_checkbox_label, value=False)
@@ -102,6 +137,9 @@ if auth:
                     }
                 )
                 st.session_state["history"].add_ai_message(response)
+
+                if len(st.session_state["messages"]) == 2:
+                    st.experimental_rerun()
 
     if __name__ == "__main__":
         main()

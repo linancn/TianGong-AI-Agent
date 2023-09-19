@@ -2,7 +2,7 @@ import streamlit as st
 from langchain.memory import XataChatMessageHistory
 
 
-def chat_history(_session_id: str):
+def xata_chat_history(_session_id: str):
     chat_history = XataChatMessageHistory(
         session_id=_session_id,
         api_key=st.secrets["xata_api_key"],
