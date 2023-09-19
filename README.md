@@ -1,21 +1,21 @@
-
 # TianGong Agent
 
-- [TianGong Agent](#tiangong-agent)
-  - [Env Preparing](#env-preparing)
-    - [Using VSCode Dev Contariners](#using-vscode-dev-contariners)
-    - [Local Env](#local-env)
-  - [Key Configurations](#key-configurations)
-    - [OpenAI API key](#openai-api-key)
-    - [Pinecone](#pinecone)
-    - [Xata](#xata)
-    - [LLM model](#llm-model)
-    - [Password (optional)](#password-optional)
-  - [Customorize your own UI](#customorize-your-own-ui)
-  - [Start locally](#start-locally)
-    - [Auto Build](#auto-build)
-    - [Production Run](#production-run)
-  - [Deployment](#deployment)
+Contents
+
+- [Env Preparing](#env-preparing)
+  - [🐳Using VSCode Dev Contariners](#using-vscode-dev-contariners)
+  - [Local Env](#local-env)
+- [Key Configurations](#key-configurations)
+  - [OpenAI API key](#openai-api-key)
+  - [Pinecone](#pinecone)
+  - [Xata](#xata)
+  - [LLM model](#llm-model)
+  - [Password (optional)](#password-optional)
+- [Customorize your own UI](#customorize-your-own-ui)
+- [Start locally](#start-locally)
+  - [Auto Build](#auto-build)
+  - [Production Run](#production-run)
+- [Deployment](#deployment)
 
 ## Env Preparing
 
@@ -66,90 +66,99 @@ sudo apt install nvidia-cuda-toolkit
 ## Key Configurations
 
 Replace `Your*` in the file `.streamlit/secrets.dev.toml` with **your own keys**.
-![secrets](assets/secrets.png)
+
+```bash
+openai_api_key = "YourKey"
+pinecone_api_key = "YourKey"
+pinecone_environment = "YourENV"
+pinecone_index = "YourIndex"
+xata_api_key = "YourKey"
+xata_db_url = "YourURL"
+langchain_verbose = true
+llm_model = "YourModel"
+password = "YourKey"
+```
 
 ### OpenAI API key
 
 Follow these steps to retrieve your OpenAI API key :
 
-1. **Register or Log in to Your Account:**
+#### 1. Register or Log in to Your Account
 
-   - If you don't already have an account with OpenAI, you'll need to [register](https://platform.openai.com/signup) for one.
+- If you don't already have an account with OpenAI, you'll need to [register](https://platform.openai.com/signup) for one.
 
-   - Go to the [Overview - OpenAI API](https://platform.openai.com/). Enter your credentials to log in to your OpenAI account.
+- Go to the [Overview - OpenAI API](https://platform.openai.com/). Enter your credentials to log in to your OpenAI account.
 
-2. **Access API Keys:**
+#### 2. Access API Keys
 
-   - Once logged in, click on your account name in the upper right corner. In the dropdown menu, select "View API keys."
+- Once logged in, click on your account name in the upper right corner. In the dropdown menu, select "View API keys."
 
-      ![openai-api-1](assets/openai-api-1.png)
+  ![openai-api-1](assets/openai-api-1.png)
 
-   - Create a New API key
+- Create a New API key
 
-      ![openai-api-2](assets/openai-api-2.png)
+  ![openai-api-2](assets/openai-api-2.png)
 
-   - Copy the API key
+- Copy the API key
 
-      ![openai-api-3](assets/openai-api-3.png)
+  ![openai-api-3](assets/openai-api-3.png)
 
-   - Paste it into your code as follows:
+- Paste it into your code as follows:
 
-      ```bash
-        openai_api_key = "YourKey"
-      ```
+  ```bash
+    openai_api_key = "YourKey"
+  ```
 
 ### Pinecone
 
-#### Pinecone API Key and Environment
+#### 1. Pinecone API Key and Environment
 
 Follow these steps to retrieve your Pinecone API Key and Environment:
 
-1. **Register or Log in to Your Account:**
+#### 2. Register or Log in to Your Account
 
-   - If you don't already have an account with Pinecone, you'll need to [register](https://app.pinecone.io/?sessionType=signup) for one.
+- If you don't already have an account with Pinecone, you'll need to [register](https://app.pinecone.io/?sessionType=signup) for one.
 
-   - Go to the [Vector Database for Vector Search | Pinecone](https://www.pinecone.io/). Enter your credentials to log in to your Pinecone account.
+- Go to the [Vector Database for Vector Search | Pinecone](https://www.pinecone.io/). Enter your credentials to log in to your Pinecone account.
 
-     ![pinecone-1](assets/pinecone-1.png)
+  ![pinecone-1](assets/pinecone-1.png)
 
-2. **Access API Key and Environment:**
+#### 3. Access API Key and Environment
 
-   - Once logged in, select "API Keys" in the left corner. Then create a new API key by step1-3. You can also use the default API.
+- Once logged in, select "API Keys" in the left corner. Then create a new API key by step1-3. You can also use the default API.
 
-     ![pinecone-2](assets/pinecone-2.png)
+  ![pinecone-2](assets/pinecone-2.png)
 
-   - Copy the API key (Value) and Environment
+- Copy the API key (Value) and Environment
 
-     ![pinecone-3](assets/pinecone-3.png)
+  ![pinecone-3](assets/pinecone-3.png)
 
-   - Paste it into your code as follows:
+- Paste it into your code as follows:
 
-     ```bash
-     pinecone_api_key = "YourKey"
-     pinecone_environment = "YourENV"
-     ```
+  ```bash
+  pinecone_api_key = "YourKey"
+  pinecone_environment = "YourENV"
+  ```
 
-#### Pinecone Index
+#### 4. Pinecone Index
 
-1. **Create a New Index**
+- Create a New Index
 
-    ![pinecone-4](assets/pinecone-4.png)
+  ![pinecone-4](assets/pinecone-4.png)
 
-2. **Index Configuration**
+- Index Configuration
+  
+  **Custom index name.** Example: gpt.
+  
+  **Select the index type and size.** Dimensions: 1536. Metric cosine: cosine. Select your Pod Type: Default starter.
 
-   - Custom index name.
-   - Select the index type and size.
-      - Dimensions: 1536
-      - Metric cosine: cosine
-      - Select your Pod Type: Default starter
+  Paste **Index Name** into your code as follows:
 
-     ![pinecone-5](assets/pinecone-5.png)
-
-   - Paste **Index Name** into your code as follows:
-
-     ```bash
-     pinecone_index = "YourIndex"
-     ```
+  ```bash
+  pinecone_index = "YourIndex"
+  ```
+  
+    ![pinecone-5](assets/pinecone-5.png)
 
 ### Xata
 
