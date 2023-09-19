@@ -160,8 +160,51 @@ Step3: Paste *Index Name* into your code as follows:
 
 ### Xata
 
-- API key
-- Database url
+Follow these steps to retrieve your Xata API Key and Database URL:
+
+#### 1.Register or Log in to Your Account
+
+You can use your GitHub or Google account to log in to [Xata](https://xata.io/).  
+
+#### 2. Access API Key
+
+Step1: Once logged in, click on your account name in the upper right corner. In the dropdown menu, select "Account settings."
+
+![xata-1](assets/xata-1.png)
+
+Step2: Add a new API key.
+
+![xata-2](assets/xata-2.png)
+
+![xata-3](assets/xata-3.png)
+
+Step3: Copy the API key
+
+![xata-4](assets/xata-4.png)
+
+Step4: Paste it into your code as follows:
+
+```bash
+xata_api_key = "YourKey"
+```
+
+#### 3. Access Database URL
+
+Setp1: Creat a new database.
+
+![xata-5](assets/xata-5.png)
+
+Step2: Clink the gear icon and go to the Copy Database URL
+
+![xata-6](assets/xata-6.png)
+
+![xata-7](assets/xata-7.png)
+
+Step3: Paste it into your code as follows:
+
+```bash
+xata_db_url = "YourURL"
+```
 
 ### LLM model
 
