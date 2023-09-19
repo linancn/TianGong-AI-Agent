@@ -3,7 +3,7 @@
 Contents
 
 - [Env Preparing](#env-preparing)
-  - [🐳Using VSCode Dev Contariners](#using-vscode-dev-contariners)
+  - [🐳VSCode Dev Contariners](#vscode-dev-contariners)
   - [Local Env](#local-env)
 - [Key Configurations](#key-configurations)
   - [OpenAI API key](#openai-api-key)
@@ -19,7 +19,7 @@ Contents
 
 ## Env Preparing
 
-### Using VSCode Dev Contariners
+### VSCode Dev Contariners
 
 [Tutorial](https://code.visualstudio.com/docs/devcontainers/tutorial)
 
@@ -85,80 +85,78 @@ Follow these steps to retrieve your OpenAI API key :
 
 #### 1. Register or Log in to Your Account
 
-- If you don't already have an account with OpenAI, you'll need to [register](https://platform.openai.com/signup) for one.
+If you don't already have an account with OpenAI, you'll need to [register](https://platform.openai.com/signup) for one.
 
-- Go to the [Overview - OpenAI API](https://platform.openai.com/). Enter your credentials to log in to your OpenAI account.
+Go to the [Overview - OpenAI API](https://platform.openai.com/). Enter your credentials to log in to your OpenAI account.
 
 #### 2. Access API Keys
 
-- Once logged in, click on your account name in the upper right corner. In the dropdown menu, select "View API keys."
+Step1: Once logged in, click on your account name in the upper right corner. In the dropdown menu, select "View API keys."
 
-  ![openai-api-1](assets/openai-api-1.png)
+![openai-api-1](assets/openai-api-1.png)
 
-- Create a New API key
+Step2: Create a New API key
 
-  ![openai-api-2](assets/openai-api-2.png)
+![openai-api-2](assets/openai-api-2.png)
 
-- Copy the API key
+Step3: Copy the API key
 
-  ![openai-api-3](assets/openai-api-3.png)
+![openai-api-3](assets/openai-api-3.png)
 
-- Paste it into your code as follows:
+Step4: Paste it into your code as follows:
 
-  ```bash
-    openai_api_key = "YourKey"
-  ```
+```bash
+openai_api_key = "YourKey"
+```
 
 ### Pinecone
 
-#### 1. Pinecone API Key and Environment
-
 Follow these steps to retrieve your Pinecone API Key and Environment:
 
-#### 2. Register or Log in to Your Account
+#### 1. Register or Log in to Your Account
 
-- If you don't already have an account with Pinecone, you'll need to [register](https://app.pinecone.io/?sessionType=signup) for one.
+If you don't already have an account with Pinecone, you'll need to [register](https://app.pinecone.io/?sessionType=signup) for one.
 
-- Go to the [Vector Database for Vector Search | Pinecone](https://www.pinecone.io/). Enter your credentials to log in to your Pinecone account.
+Go to the [Vector Database for Vector Search | Pinecone](https://www.pinecone.io/). Enter your credentials to log in to your Pinecone account.
 
-  ![pinecone-1](assets/pinecone-1.png)
+![pinecone-1](assets/pinecone-1.png)
 
-#### 3. Access API Key and Environment
+#### 2. Access API Key and Environment
 
-- Once logged in, select "API Keys" in the left corner. Then create a new API key by step1-3. You can also use the default API.
+Step1: Once logged in, select "API Keys" in the left corner. Then create a new API key by step1-3. You can also use the default API.
 
-  ![pinecone-2](assets/pinecone-2.png)
+![pinecone-2](assets/pinecone-2.png)
 
-- Copy the API key (Value) and Environment
+Step2: Copy the API key (Value) and Environment
 
-  ![pinecone-3](assets/pinecone-3.png)
+![pinecone-3](assets/pinecone-3.png)
 
-- Paste it into your code as follows:
+Step3: Paste it into your code as follows:
 
-  ```bash
-  pinecone_api_key = "YourKey"
-  pinecone_environment = "YourENV"
-  ```
+```bash
+pinecone_api_key = "YourKey"
+pinecone_environment = "YourENV"
+```
 
-#### 4. Pinecone Index
+#### 3. Pinecone Index
 
-- Create a New Index
+Step1: Create a New Index
 
-  ![pinecone-4](assets/pinecone-4.png)
+![pinecone-4](assets/pinecone-4.png)
 
-- Index Configuration
+Step2: Index Configuration
   
-  **Custom index name.** Example: gpt.
+  **- Custom index name.** Example: gpt.
   
-  **Select the index type and size.** Dimensions: 1536. Metric cosine: cosine. Select your Pod Type: Default starter.
+  **- Select the index type and size.** Dimensions: 1536. Metric cosine: cosine. Select your Pod Type: Default starter.
 
-  Paste **Index Name** into your code as follows:
+![pinecone-5](assets/pinecone-5.png)
+
+Step3: Paste *Index Name* into your code as follows:
 
   ```bash
   pinecone_index = "YourIndex"
   ```
-  
-    ![pinecone-5](assets/pinecone-5.png)
 
 ### Xata
 
