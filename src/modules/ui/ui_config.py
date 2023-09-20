@@ -38,6 +38,8 @@ class UI:
     sidebar_file_uploader_spinner: str
     sidebar_file_uploader_error: str
     current_chat_title: str
+    sidebar_newchat_button_label: str
+    sidebar_delete_button_label: str
     chat_ai_avatar: str
     chat_ai_welcome: str
     chat_ai_spinner: str

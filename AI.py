@@ -13,6 +13,7 @@ from src.modules.agents.agent_history import xata_chat_history
 
 ui = ui_config.create_ui_from_config()
 
+os.environ["OPENAI_API_KEY"] = st.secrets["openai_api_key"]
 os.environ["XATA_API_KEY"] = st.secrets["xata_api_key"]
 os.environ["XATA_DATABASE_URL"] = st.secrets["xata_db_url"]
 
@@ -68,6 +69,24 @@ if auth:
                         ) = tools.get_faiss_db(uploaded_files)
 
         st.divider()
+
+        col_newchat, col_delete = st.columns([1, 1])
+        with col_newchat:
+            new_chat = st.button(
+                ui.sidebar_newchat_button_label, use_container_width=True
+            )
+        if new_chat:
+            st.session_state.clear()
+            st.experimental_rerun()
+
+        with col_delete:
+            delete_chat = st.button(
+                ui.sidebar_delete_button_label, use_container_width=True
+            )
+        if delete_chat:
+            utils.delete_chat_history(st.session_state["selected_chat_id"])
+            st.session_state.clear()
+            st.experimental_rerun()
 
         table_map = utils.fetch_chat_history()
         if "first_run" not in st.session_state:

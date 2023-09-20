@@ -4,8 +4,6 @@ This is the most general purpose action agent.
 """
 
 
-import os
-
 import streamlit as st
 from langchain.agents import AgentType, initialize_agent
 from langchain.chat_models import ChatOpenAI
@@ -20,10 +18,8 @@ from src.modules.tools.tools import (
     search_wiki_tool,
 )
 
-os.environ["OPENAI_API_KEY"] = st.secrets["openai_api_key"]
-
-llm_model = "gpt-4"
-langchain_verbose = True
+llm_model = st.secrets["llm_model"]
+langchain_verbose = st.secrets["langchain_verbose"]
 
 
 def main_agent():

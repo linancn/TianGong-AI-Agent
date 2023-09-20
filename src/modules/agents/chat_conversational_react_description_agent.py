@@ -21,10 +21,8 @@ from src.modules.tools.tools import (
 )
 
 
-os.environ["OPENAI_API_KEY"] = st.secrets["openai_api_key"]
-
-llm_model = "gpt-4"
-langchain_verbose = True
+llm_model = st.secrets["llm_model"]
+langchain_verbose = st.secrets["langchain_verbose"]
 
 
 def agent_memory():

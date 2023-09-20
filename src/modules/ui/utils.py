@@ -214,6 +214,15 @@ def fetch_chat_history():
     return table_map
 
 
+def delete_chat_history(session_id):
+    """Delete the chat history by session_id."""
+    client = XataClient()
+    client.sql().query(
+        'DELETE FROM "tiangong_memory" WHERE "sessionId" = $1',
+        [session_id],
+    )
+
+
 def convert_history_to_message(history):
     if isinstance(history, HumanMessage):
         return {"role": "user", "content": history.content}
@@ -223,6 +232,7 @@ def convert_history_to_message(history):
             "avatar": ui.chat_ai_avatar,
             "content": history.content,
         }
+
 
 def initialize_messages(history):
     # 将历史消息转换为消息格式
@@ -235,5 +245,5 @@ def initialize_messages(history):
         "content": ui.chat_ai_welcome,
     }
     messages.insert(0, welcome_message)
-    
+
     return messages
