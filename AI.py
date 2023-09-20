@@ -46,6 +46,29 @@ if auth:
             st.title(ui.sidebar_title)
         st.subheader(ui.sidebar_subheader)
 
+        with st.expander(ui.sidebar_expander_title):
+            # txt2audio = st.checkbox(ui.txt2audio_checkbox_label, value=False)
+            # chat_memory = st.checkbox(ui.chat_memory_checkbox_label, value=False)
+            search_docs = st.toggle(ui.upload_docs_checkbox_label, value=False)
+
+            if search_docs:
+                uploaded_files = st.file_uploader(
+                    label=ui.sidebar_file_uploader_title,
+                    accept_multiple_files=True,
+                    type=None,
+                )
+                if uploaded_files != [] and uploaded_files != st.session_state.get(
+                    "uploaded_files"
+                ):
+                    st.session_state["uploaded_files"] = uploaded_files
+                    with st.spinner(ui.sidebar_file_uploader_spinner):
+                        (
+                            st.session_state["doc_chucks"],
+                            st.session_state["faiss_db"],
+                        ) = tools.get_faiss_db(uploaded_files)
+
+        st.divider()
+
         table_map = utils.fetch_chat_history()
         if "first_run" not in st.session_state:
             timestamp = time.time()
@@ -67,11 +90,9 @@ if auth:
         # Update the selectbox with the current selected_chat_id value
         current_chat_id = st.selectbox(
             label=ui.current_chat_title,
+            label_visibility="collapsed",
             options=entries,
             format_func=lambda x: table_map[x],
-            # index=entries.index(
-            #     st.session_state["selected_chat_id"]
-            # ),  # Use the saved value's index
         )
 
         # Save the selected value back to session state
@@ -82,31 +103,9 @@ if auth:
             st.session_state["first_run"] = True
         else:
             st.session_state["history"] = xata_chat_history(_session_id=current_chat_id)
-            messages_list = st.session_state["history"].messages
-            st.session_state["messages"] = [
-                utils.convert_history_to_message(message) for message in messages_list
-            ]
-
-    with st.expander(ui.sidebar_expander_title):
-        # txt2audio = st.checkbox(ui.txt2audio_checkbox_label, value=False)
-        # chat_memory = st.checkbox(ui.chat_memory_checkbox_label, value=False)
-        search_docs = st.toggle(ui.upload_docs_checkbox_label, value=False)
-
-        if search_docs:
-            uploaded_files = st.file_uploader(
-                label=ui.sidebar_file_uploader_title,
-                accept_multiple_files=True,
-                type=None,
+            st.session_state["messages"] = utils.initialize_messages(
+                st.session_state["history"].messages
             )
-            if uploaded_files != [] and uploaded_files != st.session_state.get(
-                "uploaded_files"
-            ):
-                st.session_state["uploaded_files"] = uploaded_files
-                with st.spinner(ui.sidebar_file_uploader_spinner):
-                    (
-                        st.session_state["doc_chucks"],
-                        st.session_state["faiss_db"],
-                    ) = tools.get_faiss_db(uploaded_files)
 
     @utils.enable_chat_history
     def main():
@@ -138,7 +137,7 @@ if auth:
                 )
                 st.session_state["history"].add_ai_message(response)
 
-                if len(st.session_state["messages"]) == 2:
+                if len(st.session_state["messages"]) == 3:
                     st.experimental_rerun()
 
     if __name__ == "__main__":

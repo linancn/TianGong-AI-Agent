@@ -223,3 +223,17 @@ def convert_history_to_message(history):
             "avatar": ui.chat_ai_avatar,
             "content": history.content,
         }
+
+def initialize_messages(history):
+    # 将历史消息转换为消息格式
+    messages = [convert_history_to_message(message) for message in history]
+
+    # 在最前面加入欢迎消息
+    welcome_message = {
+        "role": "assistant",
+        "avatar": ui.chat_ai_avatar,
+        "content": ui.chat_ai_welcome,
+    }
+    messages.insert(0, welcome_message)
+    
+    return messages
