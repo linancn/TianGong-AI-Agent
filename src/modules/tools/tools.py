@@ -1,7 +1,6 @@
 import datetime
 import io
 import json
-import os
 import re
 import tempfile
 from collections import Counter
@@ -28,10 +27,9 @@ import src.modules.ui.ui_config as ui_config
 
 ui = ui_config.create_ui_from_config()
 
-os.environ["OPENAI_API_KEY"] = st.secrets["openai_api_key"]
 
-llm_model = "gpt-4"
-langchain_verbose = True
+llm_model = st.secrets["llm_model"]
+langchain_verbose = st.secrets["langchain_verbose"]
 
 
 # ##############################
