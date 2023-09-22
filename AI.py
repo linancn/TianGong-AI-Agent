@@ -77,7 +77,7 @@ if auth:
             )
         if new_chat:
             st.session_state.clear()
-            st.experimental_rerun()
+            st.rerun()
 
         with col_delete:
             delete_chat = st.button(
@@ -86,7 +86,7 @@ if auth:
         if delete_chat:
             utils.delete_chat_history(st.session_state["selected_chat_id"])
             st.session_state.clear()
-            st.experimental_rerun()
+            st.rerun()
 
         table_map = utils.fetch_chat_history()
         if "first_run" not in st.session_state:
@@ -157,7 +157,7 @@ if auth:
                 st.session_state["history"].add_ai_message(response)
 
                 if len(st.session_state["messages"]) == 3:
-                    st.experimental_rerun()
+                    st.rerun()
 
     if __name__ == "__main__":
         main()
