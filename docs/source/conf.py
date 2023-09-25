@@ -28,7 +28,7 @@ extensions = [
 ]
 
 templates_path = ["_templates"]
-exclude_patterns = []
+exclude_patterns = ["AI.rst"]
 
 
 # -- Options for HTML output -------------------------------------------------
