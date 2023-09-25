@@ -162,7 +162,7 @@ Step3: Paste *Index Name* into your code as follows:
 
 Follow these steps to retrieve your Xata API Key and Database URL:
 
-#### 1.Register or Log in to Your Account
+#### 1. Register or Log in to Your Account
 
 You can use your GitHub or Google account to log in to [Xata](https://xata.io/).  
 
@@ -225,15 +225,22 @@ Or Using VsCode Debug Streamlit Config
 
 ### Auto Build
 
-The auto build will be triggered by pushing any tag named like release-v$version. For instance, push a tag named as release-v0.0.1 will build a docker image of 0.0.1 version.
+The auto build will be triggered by pushing any tag named like v$version. For instance, push a tag named as v0.0.1 will build a docker image of 0.0.1 version.
 
 ```bash
 #list existing tags
 git tag
 #creat a new tag
-git tag release-v0.0.1
+git tag v0.0.1
 #push this tag to origin
-git push origin release-v0.0.1
+git push origin v0.0.1
+```
+
+### sphinx
+
+```bash
+cd docs/source && sphinx-apidoc -o . ../../src/ && cd ../..
+cd docs/source && sphinx-autobuild . build/html && cd ../..
 ```
 
 ### Production Run

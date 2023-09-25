@@ -9,6 +9,9 @@ openai
 pandas
 pdfplumber
 pinecone-client
+sphinx
+sphinx-autobuild
+sphinx-rtd-theme
 streamlit
 tenacity
 tiktoken
