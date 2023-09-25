@@ -24,4 +24,4 @@ RUN pip install -r requirements.txt --upgrade
 COPY . .
 
 # 运行脚本
-CMD ["streamlit", "run", "AI.py"]
+CMD ["streamlit", "run", "src/AI.py"]
