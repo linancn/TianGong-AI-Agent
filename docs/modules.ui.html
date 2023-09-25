@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>modules.ui package &mdash; TianGong-AI-Agent  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            TianGong-AI-Agent
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">modules.ui package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-modules.ui.ui_config">modules.ui.ui_config module</a><ul>
+<li><a class="reference internal" href="#modules.ui.ui_config.Theme"><code class="docutils literal notranslate"><span class="pre">Theme</span></code></a><ul>
+<li><a class="reference internal" href="#modules.ui.ui_config.Theme.backgroundColor"><code class="docutils literal notranslate"><span class="pre">Theme.backgroundColor</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.Theme.base"><code class="docutils literal notranslate"><span class="pre">Theme.base</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.Theme.font"><code class="docutils literal notranslate"><span class="pre">Theme.font</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.Theme.primaryColor"><code class="docutils literal notranslate"><span class="pre">Theme.primaryColor</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.Theme.secondaryBackgroundColor"><code class="docutils literal notranslate"><span class="pre">Theme.secondaryBackgroundColor</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.Theme.textColor"><code class="docutils literal notranslate"><span class="pre">Theme.textColor</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI"><code class="docutils literal notranslate"><span class="pre">UI</span></code></a><ul>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.chat_ai_avatar"><code class="docutils literal notranslate"><span class="pre">UI.chat_ai_avatar</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.chat_ai_spinner"><code class="docutils literal notranslate"><span class="pre">UI.chat_ai_spinner</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.chat_ai_welcome"><code class="docutils literal notranslate"><span class="pre">UI.chat_ai_welcome</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.chat_human_placeholder"><code class="docutils literal notranslate"><span class="pre">UI.chat_human_placeholder</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.chat_memory_checkbox_label"><code class="docutils literal notranslate"><span class="pre">UI.chat_memory_checkbox_label</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.current_chat_title"><code class="docutils literal notranslate"><span class="pre">UI.current_chat_title</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.need_passwd"><code class="docutils literal notranslate"><span class="pre">UI.need_passwd</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.page_icon"><code class="docutils literal notranslate"><span class="pre">UI.page_icon</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.page_markdown"><code class="docutils literal notranslate"><span class="pre">UI.page_markdown</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.page_title"><code class="docutils literal notranslate"><span class="pre">UI.page_title</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.sidebar_delete_button_label"><code class="docutils literal notranslate"><span class="pre">UI.sidebar_delete_button_label</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.sidebar_expander_title"><code class="docutils literal notranslate"><span class="pre">UI.sidebar_expander_title</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.sidebar_file_uploader_error"><code class="docutils literal notranslate"><span class="pre">UI.sidebar_file_uploader_error</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.sidebar_file_uploader_spinner"><code class="docutils literal notranslate"><span class="pre">UI.sidebar_file_uploader_spinner</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.sidebar_file_uploader_title"><code class="docutils literal notranslate"><span class="pre">UI.sidebar_file_uploader_title</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.sidebar_image"><code class="docutils literal notranslate"><span class="pre">UI.sidebar_image</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.sidebar_markdown"><code class="docutils literal notranslate"><span class="pre">UI.sidebar_markdown</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.sidebar_newchat_button_label"><code class="docutils literal notranslate"><span class="pre">UI.sidebar_newchat_button_label</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.sidebar_subheader"><code class="docutils literal notranslate"><span class="pre">UI.sidebar_subheader</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.sidebar_title"><code class="docutils literal notranslate"><span class="pre">UI.sidebar_title</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.theme"><code class="docutils literal notranslate"><span class="pre">UI.theme</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.txt2audio_checkbox_label"><code class="docutils literal notranslate"><span class="pre">UI.txt2audio_checkbox_label</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.ui_config.UI.upload_docs_checkbox_label"><code class="docutils literal notranslate"><span class="pre">UI.upload_docs_checkbox_label</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#modules.ui.ui_config.create_ui_from_config"><code class="docutils literal notranslate"><span class="pre">create_ui_from_config()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-modules.ui.utils">modules.ui.utils module</a><ul>
+<li><a class="reference internal" href="#modules.ui.utils.check_password"><code class="docutils literal notranslate"><span class="pre">check_password()</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.utils.convert_history_to_message"><code class="docutils literal notranslate"><span class="pre">convert_history_to_message()</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.utils.delete_chat_history"><code class="docutils literal notranslate"><span class="pre">delete_chat_history()</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.utils.enable_chat_history"><code class="docutils literal notranslate"><span class="pre">enable_chat_history()</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.utils.fetch_chat_history"><code class="docutils literal notranslate"><span class="pre">fetch_chat_history()</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.utils.gTTS_text_language_func_calling_chain"><code class="docutils literal notranslate"><span class="pre">gTTS_text_language_func_calling_chain()</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.utils.initialize_messages"><code class="docutils literal notranslate"><span class="pre">initialize_messages()</span></code></a></li>
+<li><a class="reference internal" href="#modules.ui.utils.show_audio_player"><code class="docutils literal notranslate"><span class="pre">show_audio_player()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-modules.ui">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">TianGong-AI-Agent</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">modules.ui package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/modules.ui.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="modules-ui-package">
+<h1>modules.ui package<a class="headerlink" href="#modules-ui-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-modules.ui.ui_config">
+<span id="modules-ui-ui-config-module"></span><h2>modules.ui.ui_config module<a class="headerlink" href="#module-modules.ui.ui_config" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="modules.ui.ui_config.Theme">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">modules.ui.ui_config.</span></span><span class="sig-name descname"><span class="pre">Theme</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primaryColor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backgroundColor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secondaryBackgroundColor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">textColor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">font</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#modules.ui.ui_config.Theme" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.Theme.backgroundColor">
+<span class="sig-name descname"><span class="pre">backgroundColor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.Theme.backgroundColor" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.Theme.base">
+<span class="sig-name descname"><span class="pre">base</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.Theme.base" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.Theme.font">
+<span class="sig-name descname"><span class="pre">font</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.Theme.font" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.Theme.primaryColor">
+<span class="sig-name descname"><span class="pre">primaryColor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.Theme.primaryColor" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.Theme.secondaryBackgroundColor">
+<span class="sig-name descname"><span class="pre">secondaryBackgroundColor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.Theme.secondaryBackgroundColor" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.Theme.textColor">
+<span class="sig-name descname"><span class="pre">textColor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.Theme.textColor" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">modules.ui.ui_config.</span></span><span class="sig-name descname"><span class="pre">UI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">need_passwd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theme</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#modules.ui.ui_config.Theme" title="modules.ui.ui_config.Theme"><span class="pre">modules.ui.ui_config.Theme</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">page_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">page_icon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">page_markdown</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sidebar_image</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sidebar_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sidebar_subheader</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sidebar_markdown</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sidebar_expander_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">txt2audio_checkbox_label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chat_memory_checkbox_label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upload_docs_checkbox_label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sidebar_file_uploader_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sidebar_file_uploader_spinner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sidebar_file_uploader_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_chat_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sidebar_newchat_button_label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sidebar_delete_button_label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chat_ai_avatar</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chat_ai_welcome</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chat_ai_spinner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chat_human_placeholder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#modules.ui.ui_config.UI" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.chat_ai_avatar">
+<span class="sig-name descname"><span class="pre">chat_ai_avatar</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.chat_ai_avatar" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.chat_ai_spinner">
+<span class="sig-name descname"><span class="pre">chat_ai_spinner</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.chat_ai_spinner" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.chat_ai_welcome">
+<span class="sig-name descname"><span class="pre">chat_ai_welcome</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.chat_ai_welcome" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.chat_human_placeholder">
+<span class="sig-name descname"><span class="pre">chat_human_placeholder</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.chat_human_placeholder" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.chat_memory_checkbox_label">
+<span class="sig-name descname"><span class="pre">chat_memory_checkbox_label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.chat_memory_checkbox_label" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.current_chat_title">
+<span class="sig-name descname"><span class="pre">current_chat_title</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.current_chat_title" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.need_passwd">
+<span class="sig-name descname"><span class="pre">need_passwd</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.need_passwd" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.page_icon">
+<span class="sig-name descname"><span class="pre">page_icon</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.page_icon" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.page_markdown">
+<span class="sig-name descname"><span class="pre">page_markdown</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.page_markdown" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.page_title">
+<span class="sig-name descname"><span class="pre">page_title</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.page_title" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.sidebar_delete_button_label">
+<span class="sig-name descname"><span class="pre">sidebar_delete_button_label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.sidebar_delete_button_label" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.sidebar_expander_title">
+<span class="sig-name descname"><span class="pre">sidebar_expander_title</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.sidebar_expander_title" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.sidebar_file_uploader_error">
+<span class="sig-name descname"><span class="pre">sidebar_file_uploader_error</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.sidebar_file_uploader_error" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.sidebar_file_uploader_spinner">
+<span class="sig-name descname"><span class="pre">sidebar_file_uploader_spinner</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.sidebar_file_uploader_spinner" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.sidebar_file_uploader_title">
+<span class="sig-name descname"><span class="pre">sidebar_file_uploader_title</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.sidebar_file_uploader_title" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.sidebar_image">
+<span class="sig-name descname"><span class="pre">sidebar_image</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.sidebar_image" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.sidebar_markdown">
+<span class="sig-name descname"><span class="pre">sidebar_markdown</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.sidebar_markdown" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.sidebar_newchat_button_label">
+<span class="sig-name descname"><span class="pre">sidebar_newchat_button_label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.sidebar_newchat_button_label" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.sidebar_subheader">
+<span class="sig-name descname"><span class="pre">sidebar_subheader</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.sidebar_subheader" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.sidebar_title">
+<span class="sig-name descname"><span class="pre">sidebar_title</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.sidebar_title" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.theme">
+<span class="sig-name descname"><span class="pre">theme</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#modules.ui.ui_config.Theme" title="modules.ui.ui_config.Theme"><span class="pre">Theme</span></a></em><a class="headerlink" href="#modules.ui.ui_config.UI.theme" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.txt2audio_checkbox_label">
+<span class="sig-name descname"><span class="pre">txt2audio_checkbox_label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.txt2audio_checkbox_label" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.ui.ui_config.UI.upload_docs_checkbox_label">
+<span class="sig-name descname"><span class="pre">upload_docs_checkbox_label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#modules.ui.ui_config.UI.upload_docs_checkbox_label" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modules.ui.ui_config.create_ui_from_config">
+<span class="sig-prename descclassname"><span class="pre">modules.ui.ui_config.</span></span><span class="sig-name descname"><span class="pre">create_ui_from_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#modules.ui.ui_config.create_ui_from_config" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-modules.ui.utils">
+<span id="modules-ui-utils-module"></span><h2>modules.ui.utils module<a class="headerlink" href="#module-modules.ui.utils" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="modules.ui.utils.check_password">
+<span class="sig-prename descclassname"><span class="pre">modules.ui.utils.</span></span><span class="sig-name descname"><span class="pre">check_password</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#modules.ui.utils.check_password" title="Link to this definition"></a></dt>
+<dd><p>Returns <cite>True</cite> if the user had the correct password.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modules.ui.utils.convert_history_to_message">
+<span class="sig-prename descclassname"><span class="pre">modules.ui.utils.</span></span><span class="sig-name descname"><span class="pre">convert_history_to_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">history</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#modules.ui.utils.convert_history_to_message" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modules.ui.utils.delete_chat_history">
+<span class="sig-prename descclassname"><span class="pre">modules.ui.utils.</span></span><span class="sig-name descname"><span class="pre">delete_chat_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#modules.ui.utils.delete_chat_history" title="Link to this definition"></a></dt>
+<dd><p>Delete the chat history by session_id.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modules.ui.utils.enable_chat_history">
+<span class="sig-prename descclassname"><span class="pre">modules.ui.utils.</span></span><span class="sig-name descname"><span class="pre">enable_chat_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#modules.ui.utils.enable_chat_history" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modules.ui.utils.fetch_chat_history">
+<span class="sig-prename descclassname"><span class="pre">modules.ui.utils.</span></span><span class="sig-name descname"><span class="pre">fetch_chat_history</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#modules.ui.utils.fetch_chat_history" title="Link to this definition"></a></dt>
+<dd><p>Fetch the chat history.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modules.ui.utils.gTTS_text_language_func_calling_chain">
+<span class="sig-prename descclassname"><span class="pre">modules.ui.utils.</span></span><span class="sig-name descname"><span class="pre">gTTS_text_language_func_calling_chain</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#modules.ui.utils.gTTS_text_language_func_calling_chain" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modules.ui.utils.initialize_messages">
+<span class="sig-prename descclassname"><span class="pre">modules.ui.utils.</span></span><span class="sig-name descname"><span class="pre">initialize_messages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">history</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#modules.ui.utils.initialize_messages" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modules.ui.utils.show_audio_player">
+<span class="sig-prename descclassname"><span class="pre">modules.ui.utils.</span></span><span class="sig-name descname"><span class="pre">show_audio_player</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ai_content</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#modules.ui.utils.show_audio_player" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-modules.ui">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-modules.ui" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Nan LI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

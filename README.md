@@ -240,8 +240,8 @@ git push origin v0.0.1
 
 ```bash
 
-sphinx-apidoc --force -o docs/source src/
-sphinx-autobuild docs/source docs/build/html
+sphinx-apidoc --force -o sphinx/source src/
+sphinx-autobuild sphinx/source docs
 ```
 
 ### Production Run
