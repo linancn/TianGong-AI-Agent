@@ -10,8 +10,8 @@ from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from xata.client import XataClient
 
-import src.modules.ui.ui_config as ui_config
-from src.modules.agents.agent_history import xata_chat_history
+from . import ui_config
+from ..agents.agent_history import xata_chat_history
 
 ui = ui_config.create_ui_from_config()
 

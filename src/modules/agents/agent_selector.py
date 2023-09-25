@@ -7,8 +7,10 @@ from langchain.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain.schema import SystemMessage
 
-import src.modules.agents.chat_conversational_react_description_agent as chat_conversational_react_description_agent
-import src.modules.agents.zero_shot_react_description_agent as zero_shot_react_description_agent
+from . import (
+    chat_conversational_react_description_agent as chat_conversational_react_description_agent,
+)
+from . import zero_shot_react_description_agent as zero_shot_react_description_agent
 
 llm_model = st.secrets["llm_model"]
 langchain_verbose = st.secrets["langchain_verbose"]

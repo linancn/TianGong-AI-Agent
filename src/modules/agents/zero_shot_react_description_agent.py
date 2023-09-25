@@ -8,7 +8,7 @@ import streamlit as st
 from langchain.agents import AgentType, initialize_agent
 from langchain.chat_models import ChatOpenAI
 
-from src.modules.tools.tools import (
+from ..tools.tools import (
     calculation_tool,
     innovation_assessment_tool,
     search_arxiv_tool,

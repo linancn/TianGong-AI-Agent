@@ -23,7 +23,7 @@ from langchain.tools.python.tool import PythonREPLTool
 from langchain.vectorstores import FAISS, Pinecone
 from tenacity import retry, stop_after_attempt, wait_fixed
 
-import src.modules.ui.ui_config as ui_config
+from ..ui import ui_config
 
 ui = ui_config.create_ui_from_config()
 

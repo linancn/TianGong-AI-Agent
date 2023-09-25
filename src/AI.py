@@ -5,11 +5,11 @@ from datetime import datetime
 import streamlit as st
 from langchain.callbacks import StreamlitCallbackHandler
 
-import src.modules.tools.tools as tools
-import src.modules.ui.ui_config as ui_config
-import src.modules.ui.utils as utils
-from src.modules.agents.agent_selector import main_agent
-from src.modules.agents.agent_history import xata_chat_history
+import modules.tools.tools as tools
+import modules.ui.ui_config as ui_config
+import modules.ui.utils as utils
+from modules.agents.agent_selector import main_agent
+from modules.agents.agent_history import xata_chat_history
 
 ui = ui_config.create_ui_from_config()
 
