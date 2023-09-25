@@ -47,15 +47,19 @@ class UI:
 
 
 def create_ui_from_config():
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    config_path = os.path.abspath(
+        os.path.join(current_dir, "../../../.streamlit/config.toml")
+    )
     # 读取文件
-    with open(".streamlit/config.toml", "r") as file:
+    with open(config_path, "r") as file:
         data = toml.load(file)
 
     # 替换内容
     if data["theme"] != ui_data["theme"]:
         data["theme"] = ui_data["theme"]
         # 写入文件
-        with open(".streamlit/config.toml", "w") as file:
+        with open(config_path, "w") as file:
             toml.dump(data, file)
 
     return UI(**ui_data)
