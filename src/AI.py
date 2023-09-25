@@ -144,7 +144,7 @@ if auth:
     @utils.enable_chat_history
     def main():
         if user_query := st.chat_input(placeholder=ui.chat_human_placeholder):
-            utils.display_msg(user_query, "user")
+            st.chat_message("user").markdown(user_query)
             st.session_state["history"].add_user_message(user_query)
             agent, user_prompt = main_agent(user_query)
             with st.chat_message("assistant", avatar=ui.chat_ai_avatar):

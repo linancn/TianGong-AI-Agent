@@ -41,17 +41,6 @@ def enable_chat_history(func):
     return execute
 
 
-def display_msg(msg, author):
-    """Method to display message on the UI
-
-    Args:
-        msg (str): message to display
-        author (str): author of the message -user/assistant
-    """
-    # st.session_state["messages"].append({"role": author, "content": msg})
-    st.chat_message(author).markdown(msg)
-
-
 def check_password():
     """Returns `True` if the user had the correct password."""
 
