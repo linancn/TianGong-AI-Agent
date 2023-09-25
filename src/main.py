@@ -8,13 +8,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from langchain.memory import ChatMessageHistory
 from websockets.exceptions import ConnectionClosedOK
 
-import src.modules.ui.ui_config as ui_config
-from src.api.callback import StreamingLLMCallbackHandler
-from src.api.query_data import (chat_history_chain, embedding_formatter,
-                                     func_calling_chain, get_chain, seach_docs,
-                                     search_internet, search_pinecone)
-from src.api.schemas import ChatResponse
-from src.api.check import checkApiLoginCode
+from .modules.ui import ui_config
+from api.callback import StreamingLLMCallbackHandler
+from api.query_data import (
+    chat_history_chain,
+    embedding_formatter,
+    func_calling_chain,
+    get_chain,
+    seach_docs,
+    search_internet,
+    search_pinecone,
+)
+from api.schemas import ChatResponse
+from api.check import checkApiLoginCode
 
 # Load the environment variables from the .env file
 load_dotenv()
