@@ -88,19 +88,34 @@ if auth:
             st.session_state.clear()
             st.rerun()
 
-        table_map = utils.fetch_chat_history()
         if "first_run" not in st.session_state:
             timestamp = time.time()
             st.session_state["timestamp"] = timestamp
         else:
             timestamp = st.session_state["timestamp"]
-        table_map_new = {
-            str(timestamp): datetime.fromtimestamp(timestamp).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
-            + " - New Chat"
-        }
-        table_map = table_map_new | table_map
+
+        try:  # fetch chat history from xata
+            table_map = utils.fetch_chat_history()
+
+            # add new chat to table_map
+            table_map_new = {
+                str(timestamp): datetime.fromtimestamp(timestamp).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
+                + " - New Chat"
+            }
+
+            # Merge two dicts
+            table_map = table_map_new | table_map
+        except:  # if no chat history in xata
+            table_map = {
+                str(timestamp): datetime.fromtimestamp(timestamp).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
+                + " - New Chat"
+            }
+
+        # Get all keys from table_map into a list
         entries = list(table_map.keys())
         # Check if selected_chat_id exists in session_state, if not set default as the first entry
         if "selected_chat_id" not in st.session_state:

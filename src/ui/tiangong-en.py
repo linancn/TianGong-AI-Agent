@@ -5,7 +5,7 @@ ui_data = {
         "primaryColor": "#82318E",
     },
     "page_title": "TianGong Agent",
-    "page_icon": "static/favicon.ico",
+    "page_icon": "src/static/favicon.ico",
     "page_markdown": """
         <style>
             body {
@@ -64,7 +64,7 @@ ui_data = {
             }
         </style>
       """,
-    "sidebar_image": "static/logo.png",
+    "sidebar_image": "src/static/logo.png",
     "sidebar_title": "TianGong Agent",
     "sidebar_subheader": "AI for Science 🔬 - Intelligent Agents",
     "sidebar_markdown": """
@@ -100,7 +100,7 @@ ui_data = {
     "current_chat_title": "Chat History :",
     "sidebar_newchat_button_label": "New Chat",
     "sidebar_delete_button_label": "Delete Chat",
-    "chat_ai_avatar": "static/logo.png",
+    "chat_ai_avatar": "src/static/logo.png",
     "chat_ai_welcome": "How can I help you?",
     "chat_ai_spinner": "In progress...",
     "chat_human_placeholder": "Ask me anything!",
