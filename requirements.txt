@@ -2,7 +2,6 @@ arxiv
 duckduckgo-search
 faiss-cpu
 fastapi
-furo
 gTTS
 Jinja2
 langchain
@@ -12,6 +11,7 @@ pdfplumber
 pinecone-client
 sphinx
 sphinx-autobuild
+sphinx-rtd-theme
 streamlit
 tenacity
 tiktoken
