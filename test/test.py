@@ -9,7 +9,7 @@ def get_stream(query: str):
     with s.post("http://localhost:8000/chat", stream=True, json={"text": query}) as r:
         for chunk in r.iter_content(
             chunk_size=192
-        ):  # Using a larger chunk size, e.g., 32 bytes
+        ):  # Using a larger chunk size, e.g., 192 bytes
             buffer += chunk
             try:
                 text = buffer.decode("utf-8")
@@ -24,4 +24,4 @@ def get_stream(query: str):
         print(buffer.decode("utf-8", "replace"), end="")
 
 
-get_stream("详细一下中国近代的历史,搜索internet")
+get_stream("中国2020年的人均碳排放是多少？")

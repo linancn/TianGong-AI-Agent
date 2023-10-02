@@ -1,21 +1,18 @@
-import os
 import asyncio
-from typing import Any
+import os
+from typing import Any, Dict, List
 
-import uvicorn
 import streamlit as st
-from fastapi import FastAPI, Body
+import uvicorn
+from fastapi import Body, FastAPI
 from fastapi.responses import StreamingResponse
+from langchain.agents import agent
+from langchain.callbacks.streaming_aiter import AsyncIteratorCallbackHandler
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.schema import LLMResult
 from pydantic import BaseModel
 
-from langchain.callbacks.streaming_aiter import AsyncIteratorCallbackHandler
-
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.agents import agent
-from langchain.schema import LLMResult
-
 import src.modules.agents.zero_shot_react_description_agent as zero_shot_react_description_agent
-
 
 os.environ["OPENAI_API_KEY"] = st.secrets["openai_api_key"]
 
@@ -28,11 +25,17 @@ class AsyncCallbackHandler(AsyncIteratorCallbackHandler):
     content: str = ""
     final_answer: bool = False
 
+    async def on_llm_start(
+        self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
+    ) -> None:
+        self.done.clear()
+        if "Action Input" not in self.content:
+            self.queue.put_nowait("Thought: ")
+        else:
+            self.queue.put_nowait("\nThought: ")
+
     async def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
         self.content += token
-        
-        if "Action Input" in self.content:
-             self.queue.put_nowait("\n")
 
         self.queue.put_nowait(token)
 
@@ -42,11 +45,8 @@ class AsyncCallbackHandler(AsyncIteratorCallbackHandler):
 
     async def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
         if self.final_answer:
-            self.content = ""
             self.final_answer = False
             self.done.set()
-        else:
-            self.content = ""
 
 
 async def run_call(agent: agent, query: str, stream_it: AsyncCallbackHandler):
