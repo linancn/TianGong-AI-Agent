@@ -10,7 +10,7 @@ import pdfplumber
 import pinecone
 import requests
 import streamlit as st
-from langchain import LLMChain
+from langchain.chains import LLMChain
 from langchain.chains.openai_functions import create_structured_output_chain
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import UnstructuredFileLoader, WikipediaLoader
