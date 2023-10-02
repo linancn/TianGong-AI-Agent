@@ -10,6 +10,7 @@
             "request": "launch",
             "module": "streamlit",
             "cwd": "${workspaceFolder}",
+            // "justMyCode": false,
             "args": ["run", "src/AI.py"]
         },
         {

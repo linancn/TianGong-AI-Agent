@@ -1,225 +1,104 @@
-import json
-import logging
 import os
+import asyncio
+from typing import Any
 
-from dotenv import load_dotenv
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
-from langchain.memory import ChatMessageHistory
-from websockets.exceptions import ConnectionClosedOK
+import uvicorn
+import streamlit as st
+from fastapi import FastAPI, Body
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
-from .modules.ui import ui_config
-from api.callback import StreamingLLMCallbackHandler
-from api.query_data import (
-    chat_history_chain,
-    embedding_formatter,
-    func_calling_chain,
-    get_chain,
-    seach_docs,
-    search_internet,
-    search_pinecone,
-)
-from api.schemas import ChatResponse
-from api.check import checkApiLoginCode
+from langchain.agents import AgentType, initialize_agent
+from langchain.chat_models import ChatOpenAI
+from langchain.memory import ConversationBufferWindowMemory
+from langchain.callbacks.streaming_aiter import AsyncIteratorCallbackHandler
 
-# Load the environment variables from the .env file
-load_dotenv()
+from langchain.schema import LLMResult
 
-ui = ui_config.create_ui_from_config()
-
-# Access the variables using os.environ
-openai_api_key = os.environ.get("openai_api_key")
+os.environ["OPENAI_API_KEY"] = st.secrets["openai_api_key"]
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:8081",
-    "http://localhost:8000",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+# initialize the agent (we need to do this for the callbacks)
+llm = ChatOpenAI(
+    openai_api_key=os.getenv("OPENAI_API_KEY"),
+    temperature=0.0,
+    model_name="gpt-4",
+    streaming=True,  # ! important
+    callbacks=[],  # ! important (but we will add them later)
+)
+memory = ConversationBufferWindowMemory(
+    memory_key="chat_history", k=5, return_messages=True, output_key="output"
+)
+agent = initialize_agent(
+    agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
+    tools=[],
+    llm=llm,
+    verbose=True,
+    max_iterations=3,
+    early_stopping_method="generate",
+    memory=memory,
+    return_intermediate_steps=False,
 )
 
 
-@app.get("/")
-async def root():
-    return {"result": "Hello World"}
+# class AsyncCallbackHandler(AsyncIteratorCallbackHandler):
+#     content: str = ""
+#     final_answer: bool = False
+
+#     async def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
+#         self.content += token
+#         # if we passed the final answer, we put tokens in queue
+#         if self.final_answer:
+#             if '"action_input": "' in self.content:
+#                 if token not in ['"', "}"]:
+#                     self.queue.put_nowait(token)
+#         elif "Final Answer" in self.content:
+#             self.final_answer = True
+#             self.content = ""
+
+#     async def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
+#         if self.final_answer:
+#             self.content = ""
+#             self.final_answer = False
+#             self.done.set()
+#         else:
+#             self.content = ""
 
 
-@app.websocket("/chat")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    stream_handler = StreamingLLMCallbackHandler(websocket)
-    qa_chain = get_chain(stream_handler)
+async def run_call(query: str, stream_it: AsyncIteratorCallbackHandler):
+    # assign callback handler
+    agent.agent.llm_chain.llm.callbacks = [stream_it]
+    # now query
+    await agent.acall(inputs={"input": query})
 
-    while True:
-        try:
-            # Receive and send back the client message
-            send_msg = await websocket.receive_text()
 
-            send_msg_json = json.loads(send_msg)
-            question = send_msg_json.get("question")
+# request input format
+class Query(BaseModel):
+    text: str
 
-            resp = ChatResponse(sender="human", message=question, type="stream")
-            await websocket.send_json(resp.dict())
 
-            # Construct a response
-            start_resp = ChatResponse(sender="bot", message="", type="start")
-            await websocket.send_json(start_resp.dict())
+async def create_gen(query: str, stream_it: AsyncIteratorCallbackHandler):
+    task = asyncio.create_task(run_call(query, stream_it))
+    async for token in stream_it.aiter():
+        yield token
+    await task
 
-            # check = checkApiLoginCode(send_msg_json.get("userId"), send_msg_json.get("apiLoginCode"))
-            check = "ok"
 
-            if check != "ok":
-                resp = ChatResponse(sender="bot", message="err", type="stream")
-                await websocket.send_json(resp.dict())
+@app.post("/chat")
+async def chat(
+    query: Query = Body(...),
+):
+    stream_it = AsyncIteratorCallbackHandler()
+    gen = create_gen(query.text, stream_it)
+    return StreamingResponse(gen, media_type="text/event-stream")
 
-            else:
-                resp = ChatResponse(sender="bot", message="ok", type="stream")
-                await websocket.send_json(resp.dict())
-                chat_history = ChatMessageHistory()
-                history = send_msg_json.get("history")
-                if len(history) <= 1:
-                    func_calling_response = func_calling_chain().run(question)
 
-                    query = func_calling_response.get("query")
+@app.get("/health")
+async def health():
+    """Check the api is running"""
+    return {"status": "🤙"}
 
-                    try:
-                        created_at = json.loads(
-                            func_calling_response.get("created_at", None)
-                        )
-                    except TypeError:
-                        created_at = None
 
-                    is_search_docs = False
-                    search_docs_option = "Isolated"
-                    # search_docs_option = 'Combined'
-
-                    is_search_internet = True
-
-                    if is_search_docs:
-                        if search_docs_option == ui.search_docs_options_isolated:
-                            docs_response = seach_docs(query, top_k=16)
-                            input = f"""Provide a clear, well-organized, and critically analyzed respond to the following question of "{question}" in its original language, while leveraging the information of "{docs_response}". Do not return any prefix like "AI:". Give corresponding detailed sources."""
-                        elif search_docs_option == ui.search_docs_options_combinedd:
-                            if is_search_internet:
-                                embedding_results = search_pinecone(
-                                    query, created_at, top_k=8
-                                )
-                                docs_response = seach_docs(query, top_k=8)
-                                docs_response.extend(embedding_results)
-                                internet_results = search_internet(query)
-                                docs_response.extend(internet_results)
-                                input = f"""Provide a clear, well-organized, and critically analyzed respond to the following question of "{question}" in its original language, while leveraging the information of "{docs_response}". Do not return any prefix like "AI:". Give corresponding detailed sources with urls."""
-                            elif not is_search_internet:
-                                embedding_results = search_pinecone(
-                                    query, created_at, top_k=8
-                                )
-                                docs_response = seach_docs(query, top_k=8)
-                                docs_response.extend(embedding_results)
-                                input = f"""Provide a clear, well-organized, and critically analyzed respond to the following question of "{question}" in its original language, while leveraging the information of "{docs_response}". Do not return any prefix like "AI:". Give corresponding detailed sources with urls."""
-                    elif not is_search_docs:
-                        if is_search_internet:
-                            embedding_results = search_pinecone(
-                                query, created_at, top_k=16
-                            )
-                            internet_results = search_internet(query)
-                            embedding_results.extend(internet_results)
-                            input = f"""Provide a clear, well-organized, and critically analyzed respond to the following question of "{question}" in its original language, while leveraging the information of "{embedding_results}". Do not return any prefix like "AI:". Give corresponding detailed sources with urls."""
-                        elif not is_search_internet:
-                            embedding_results = search_pinecone(
-                                query, created_at, top_k=16
-                            )
-                            input = f"""Provide a clear, well-organized, and critically analyzed respond to the following question of "{question}" in its original language, while leveraging the information of "{embedding_results}". Do not return any prefix like "AI:". Give corresponding detailed sources with urls."""
-                else:
-                    for i in range(0, len(history) - 1):
-                        chat_history.add_user_message(history[i].get("question"))
-                        chat_history.add_ai_message(history[i].get("answer"))
-
-                    chat_history.add_user_message(question)
-
-                    chat_history_response = chat_history_chain()(
-                        {"input": chat_history.messages},
-                    )
-                    chat_history_summary = chat_history_response["text"]
-
-                    func_calling_response = func_calling_chain().run(
-                        chat_history_summary
-                    )
-
-                    query = func_calling_response.get("query")
-
-                    try:
-                        created_at = json.loads(
-                            func_calling_response.get("created_at", None)
-                        )
-                    except TypeError:
-                        created_at = None
-
-                    if is_search_docs:
-                        if search_docs_option == ui.search_docs_options_isolated:
-                            docs_response = seach_docs(query, top_k=16)
-                            input = f"""Provide a clear, well-organized, and critically analyzed respond to the following question of "{question}" in its original language, while leveraging the information of "{docs_response}". Do not return any prefix like "AI:". Give corresponding detailed sources. Current conversation:"{chat_history_summary}"""
-                        elif search_docs_option == ui.search_docs_options_combined:
-                            if is_search_internet:
-                                embedding_results = search_pinecone(
-                                    query, created_at, top_k=8
-                                )
-                                docs_response = seach_docs(query, top_k=8)
-                                docs_response.extend(embedding_results)
-                                internet_results = search_internet(query)
-                                docs_response.extend(internet_results)
-                                input = f"""Provide a clear, well-organized, and critically analyzed respond to the following question of "{question}" in its original language, while leveraging the information of "{docs_response}". Do not return any prefix like "AI:". Give corresponding detailed sources with urls. Current conversation:"{chat_history_summary}"""
-                            elif not is_search_internet:
-                                embedding_results = search_pinecone(
-                                    query, created_at, top_k=8
-                                )
-                                docs_response = seach_docs(query, top_k=8)
-                                docs_response.extend(embedding_results)
-                                input = f"""Provide a clear, well-organized, and critically analyzed respond to the following question of "{question}" in its original language, while leveraging the information of "{docs_response}". Do not return any prefix like "AI:". Give corresponding detailed sources with urls. Current conversation:"{chat_history_summary}"""
-                    elif not is_search_docs:
-                        if is_search_internet:
-                            embedding_results = search_pinecone(
-                                query, created_at, top_k=16
-                            )
-                            internet_results = search_internet(query)
-                            embedding_results.extend(internet_results)
-                            input = f"""Provide a clear, well-organized, and critically analyzed respond to the following question of "{question}" in its original language, while leveraging the information of "{embedding_results}". Do not return any prefix like "AI:". Give corresponding detailed sources with urls. Current conversation:"{chat_history_summary}"""
-                        elif not is_search_internet:
-                            embedding_results = search_pinecone(
-                                query, created_at, top_k=16
-                            )
-                            input = f"""Provide a clear, well-organized, and critically analyzed respond to the following question of "{question}" in its original language, while leveraging the information of "{embedding_results}". Do not return any prefix like "AI:". Give corresponding detailed sources with urls. Current conversation:"{chat_history_summary}"""
-
-                # Send the message to the chain and feed the response back to the client
-                await qa_chain.acall(
-                    {
-                        "input": input,
-                    }
-                )
-
-            # Send the end-response back to the client
-            end_resp = ChatResponse(sender="bot", message="", type="end")
-            await websocket.send_json(end_resp.dict())
-
-        except WebSocketDisconnect:
-            logging.info("WebSocketDisconnect")
-            # TODO try to reconnect with back-off
-            break
-        except ConnectionClosedOK:
-            logging.info("ConnectionClosedOK")
-            # TODO handle this?
-            break
-        except Exception as e:
-            logging.error(e)
-            resp = ChatResponse(
-                sender="bot",
-                message="Sorry, something went wrong. Try again.",
-                type="error",
-            )
-            await websocket.send_json(resp.dict())
+if __name__ == "__main__":
+    uvicorn.run("app:app", host="localhost", port=8000, reload=True)
