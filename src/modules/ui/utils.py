@@ -193,8 +193,8 @@ def fetch_chat_history():
     for record in records:
         timestamp = float(record["sessionId"])
         record["entry"] = (
-            datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
-            + " - "
+            datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
+            + " : "
             + record["content"]
         )
 

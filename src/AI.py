@@ -100,9 +100,9 @@ if auth:
             # add new chat to table_map
             table_map_new = {
                 str(timestamp): datetime.fromtimestamp(timestamp).strftime(
-                    "%Y-%m-%d %H:%M:%S"
+                    "%Y-%m-%d"
                 )
-                + " - New Chat"
+                + " : New Chat"
             }
 
             # Merge two dicts
@@ -110,9 +110,9 @@ if auth:
         except:  # if no chat history in xata
             table_map = {
                 str(timestamp): datetime.fromtimestamp(timestamp).strftime(
-                    "%Y-%m-%d %H:%M:%S"
+                    "%Y-%m-%d"
                 )
-                + " - New Chat"
+                + " : New Chat"
             }
 
         # Get all keys from table_map into a list

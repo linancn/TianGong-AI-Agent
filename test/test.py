@@ -24,4 +24,4 @@ def get_stream(query: str):
         print(buffer.decode("utf-8", "replace"), end="")
 
 
-get_stream("详细一下中国近代的历史")
+get_stream("详细一下中国近代的历史,搜索internet")

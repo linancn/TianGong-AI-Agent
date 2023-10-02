@@ -8,67 +8,54 @@ from fastapi import FastAPI, Body
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from langchain.agents import AgentType, initialize_agent
-from langchain.chat_models import ChatOpenAI
-from langchain.memory import ConversationBufferWindowMemory
 from langchain.callbacks.streaming_aiter import AsyncIteratorCallbackHandler
 
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.agents import agent
 from langchain.schema import LLMResult
+
+import src.modules.agents.zero_shot_react_description_agent as zero_shot_react_description_agent
+
 
 os.environ["OPENAI_API_KEY"] = st.secrets["openai_api_key"]
 
 app = FastAPI()
 
-# initialize the agent (we need to do this for the callbacks)
-llm = ChatOpenAI(
-    openai_api_key=os.getenv("OPENAI_API_KEY"),
-    temperature=0.0,
-    model_name="gpt-4",
-    streaming=True,  # ! important
-    callbacks=[],  # ! important (but we will add them later)
-)
-memory = ConversationBufferWindowMemory(
-    memory_key="chat_history", k=5, return_messages=True, output_key="output"
-)
-agent = initialize_agent(
-    agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
-    tools=[],
-    llm=llm,
-    verbose=True,
-    max_iterations=3,
-    early_stopping_method="generate",
-    memory=memory,
-    return_intermediate_steps=False,
-)
+current_agent = zero_shot_react_description_agent.main_agent()
 
 
-# class AsyncCallbackHandler(AsyncIteratorCallbackHandler):
-#     content: str = ""
-#     final_answer: bool = False
+class AsyncCallbackHandler(AsyncIteratorCallbackHandler):
+    content: str = ""
+    final_answer: bool = False
 
-#     async def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
-#         self.content += token
-#         # if we passed the final answer, we put tokens in queue
-#         if self.final_answer:
-#             if '"action_input": "' in self.content:
-#                 if token not in ['"', "}"]:
-#                     self.queue.put_nowait(token)
-#         elif "Final Answer" in self.content:
-#             self.final_answer = True
-#             self.content = ""
+    async def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
+        self.content += token
+        
+        if "Action Input" in self.content:
+             self.queue.put_nowait("\n")
 
-#     async def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
-#         if self.final_answer:
-#             self.content = ""
-#             self.final_answer = False
-#             self.done.set()
-#         else:
-#             self.content = ""
+        self.queue.put_nowait(token)
+
+        if "Final Answer" in self.content:
+            self.final_answer = True
+            self.content = ""
+
+    async def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
+        if self.final_answer:
+            self.content = ""
+            self.final_answer = False
+            self.done.set()
+        else:
+            self.content = ""
 
 
-async def run_call(query: str, stream_it: AsyncIteratorCallbackHandler):
+async def run_call(agent: agent, query: str, stream_it: AsyncCallbackHandler):
     # assign callback handler
     agent.agent.llm_chain.llm.callbacks = [stream_it]
+
+    for tool in agent.tools:
+        tool.callbacks = [stream_it]
+
     # now query
     await agent.acall(inputs={"input": query})
 
@@ -78,8 +65,8 @@ class Query(BaseModel):
     text: str
 
 
-async def create_gen(query: str, stream_it: AsyncIteratorCallbackHandler):
-    task = asyncio.create_task(run_call(query, stream_it))
+async def create_gen(agent: agent, query: str, stream_it: AsyncCallbackHandler):
+    task = asyncio.create_task(run_call(agent, query, stream_it))
     async for token in stream_it.aiter():
         yield token
     await task
@@ -89,8 +76,8 @@ async def create_gen(query: str, stream_it: AsyncIteratorCallbackHandler):
 async def chat(
     query: Query = Body(...),
 ):
-    stream_it = AsyncIteratorCallbackHandler()
-    gen = create_gen(query.text, stream_it)
+    stream_it = AsyncCallbackHandler()
+    gen = create_gen(current_agent, query.text, stream_it)
     return StreamingResponse(gen, media_type="text/event-stream")
 
 

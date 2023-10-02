@@ -10,13 +10,8 @@ from langchain.chat_models import ChatOpenAI
 
 from ..tools.tools import (
     calculation_tool,
-    innovation_assessment_tool,
-    search_arxiv_tool,
-    search_internet_tool,
-    search_uploaded_docs_tool,
-    search_vector_database_tool,
-    search_wiki_tool,
 )
+from ..tools.search_internet_tool import SearchInternetTool
 
 llm_model = st.secrets["llm_model"]
 langchain_verbose = st.secrets["langchain_verbose"]
@@ -28,15 +23,11 @@ def main_agent():
         temperature=0,
         streaming=True,
         verbose=langchain_verbose,
+        callbacks=[],
     )
     tools = [
-        search_vector_database_tool,
-        search_internet_tool,
-        search_arxiv_tool,
-        search_wiki_tool,
-        search_uploaded_docs_tool,
+        SearchInternetTool(),
         calculation_tool(),
-        innovation_assessment_tool,
     ]
     agent = initialize_agent(
         tools=tools,

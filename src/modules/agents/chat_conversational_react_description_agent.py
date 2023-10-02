@@ -30,6 +30,7 @@ def agent_memory():
         temperature=0,
         streaming=False,
         verbose=False,
+        callbacks=[],
     )
     memory = ConversationSummaryBufferMemory(
         llm=llm_chat,
