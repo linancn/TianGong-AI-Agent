@@ -72,5 +72,3 @@ class SearchInternetTool(BaseTool):
             )
 
         return docs_list
-
-        # raise NotImplementedError("search_internet_tool does not support async")

@@ -10,12 +10,13 @@ from langchain.chat_models import ChatOpenAI
 from langchain.tools.python.tool import PythonREPLTool
 
 from ..tools.search_internet_tool import SearchInternetTool
-
-llm_model = st.secrets["llm_model"]
-langchain_verbose = st.secrets["langchain_verbose"]
+from ..tools.search_vectordb_tool import SearchVectordbTool
 
 
 def main_agent():
+    llm_model = st.secrets["llm_model"]
+    langchain_verbose = st.secrets["langchain_verbose"]
+
     llm_chat = ChatOpenAI(
         model=llm_model,
         temperature=0,
@@ -25,6 +26,7 @@ def main_agent():
     )
     tools = [
         SearchInternetTool(),
+        SearchVectordbTool(),
         PythonREPLTool(),
     ]
     agent = initialize_agent(

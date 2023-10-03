@@ -24,4 +24,4 @@ def get_stream(query: str):
         print(buffer.decode("utf-8", "replace"), end="")
 
 
-get_stream("中国2020年的人均碳排放是多少？")
+get_stream("什么是物质流分析，参考数据库中2020年以来在RCR期刊里面的文章内容来回答。")
