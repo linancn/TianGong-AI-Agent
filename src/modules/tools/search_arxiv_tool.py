@@ -27,7 +27,7 @@ class SearchArxivTool(BaseTool):
     args_schema: Type[BaseModel] = InputSchema
 
     @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
-    def download_file_to_stream(url):
+    def download_file_to_stream(self, url):
         # Fake User-Agent
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36"
@@ -47,7 +47,7 @@ class SearchArxivTool(BaseTool):
         file_stream.seek(0)
         return file_stream
 
-    def parse_paper(pdf_stream):
+    def parse_paper(self, pdf_stream):
         # logging.info("Parsing paper")
         pdf_obj = pdfplumber.open(pdf_stream)
         number_of_pages = len(pdf_obj.pages)
@@ -218,7 +218,7 @@ class SearchArxivTool(BaseTool):
         chunks = []
 
         for doc in docs:
-            pdf_stream = self.download_file_to_stream(doc.pdf_url)
+            pdf_stream = self.download_file_to_stream(url=doc.pdf_url)
 
             page_content = self.parse_paper(pdf_stream)
             authors = ", ".join(str(author) for author in doc.authors)
@@ -252,3 +252,42 @@ class SearchArxivTool(BaseTool):
         self, query: str, run_manager: Optional[AsyncCallbackManagerForToolRun] = None
     ) -> str:
         """Use the tool asynchronously."""
+        docs = arxiv.Search(
+            query=query, max_results=5, sort_by=arxiv.SortCriterion.Relevance
+        ).results()
+
+        text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+            chunk_size=200, chunk_overlap=10
+        )
+        chunks = []
+
+        for doc in docs:
+            pdf_stream = self.download_file_to_stream(url=doc.pdf_url)
+
+            page_content = self.parse_paper(pdf_stream)
+            authors = ", ".join(str(author) for author in doc.authors)
+            date = doc.published.strftime("%Y-%m")
+
+            source = "[{}. {}. {}.]({})".format(
+                authors,
+                doc.title,
+                date,
+                doc.entry_id,
+            )
+
+            chunk = text_splitter.create_documents(
+                [page_content], metadatas=[{"source": source}]
+            )
+
+            chunks.extend(chunk)
+
+        embeddings = OpenAIEmbeddings()
+        faiss_db = FAISS.from_documents(chunks, embeddings)
+
+        result_docs = faiss_db.similarity_search(query, k=16)
+        docs_list = []
+        for doc in result_docs:
+            source_entry = doc.metadata["source"]
+            docs_list.append({"content": doc.page_content, "source": source_entry})
+
+        return docs_list

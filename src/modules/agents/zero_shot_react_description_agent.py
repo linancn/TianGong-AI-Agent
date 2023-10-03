@@ -11,6 +11,7 @@ from langchain.tools.python.tool import PythonREPLTool
 
 from ..tools.search_internet_tool import SearchInternetTool
 from ..tools.search_vectordb_tool import SearchVectordbTool
+from ..tools.search_arxiv_tool import SearchArxivTool
 
 
 def main_agent():
@@ -27,6 +28,7 @@ def main_agent():
     tools = [
         SearchInternetTool(),
         SearchVectordbTool(),
+        SearchArxivTool(),
         PythonREPLTool(),
     ]
     agent = initialize_agent(

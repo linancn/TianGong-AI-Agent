@@ -24,4 +24,4 @@ def get_stream(query: str):
         print(buffer.decode("utf-8", "replace"), end="")
 
 
-get_stream("什么是物质流分析，参考数据库中2020年以来在RCR期刊里面的文章内容来回答。")
+get_stream("what is large language model? search arxiv")
