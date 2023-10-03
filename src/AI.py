@@ -7,8 +7,8 @@ from langchain.callbacks import StreamlitCallbackHandler
 
 import modules.ui.ui_config as ui_config
 import modules.ui.utils as utils
-from modules.agents.agent_selector import main_agent
-from modules.agents.agent_history import xata_chat_history
+from modules.agents.st_agent_selector import main_agent
+from modules.agents.memory.agent_history import xata_chat_history
 
 ui = ui_config.create_ui_from_config()
 

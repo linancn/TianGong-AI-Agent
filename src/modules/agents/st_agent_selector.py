@@ -10,7 +10,9 @@ from langchain.schema import SystemMessage
 from . import (
     chat_conversational_react_description_agent as chat_conversational_react_description_agent,
 )
-from . import st_zero_shot_react_description_agent as st_zero_shot_react_description_agent
+from . import (
+    st_zero_shot_react_description_agent as st_zero_shot_react_description_agent,
+)
 
 llm_model = st.secrets["llm_model"]
 langchain_verbose = st.secrets["langchain_verbose"]
@@ -34,7 +36,9 @@ py_files = [
     for f in files
     if os.path.isfile(os.path.join("src/modules/agents/", f))
     and f.endswith(".py")
-    and f != "agent_selector.py"
+    and f != "__init__.py"
+    and f != "st_agent_selector.py"
+    and not f.startswith("fastapi_")
 ]
 
 agent_mapping = {}

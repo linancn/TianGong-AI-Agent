@@ -15,7 +15,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
 from xata.client import XataClient
 
-from ..agents.agent_history import xata_chat_history
+from ..agents.memory.agent_history import xata_chat_history
 from . import ui_config
 
 ui = ui_config.create_ui_from_config()
