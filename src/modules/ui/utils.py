@@ -198,11 +198,17 @@ def show_audio_player(ai_content: str) -> None:
         st.error(err)
 
 
-def fetch_chat_history():
+def fetch_chat_history(username: str):
     """Fetch the chat history."""
     client = XataClient()
     response = client.sql().query(
-        'SELECT "sessionId", "content" FROM (SELECT DISTINCT ON ("sessionId") "sessionId", "xata.createdAt", "content" FROM "tiangong_memory" ORDER BY "sessionId", "xata.createdAt" ASC, "content" ASC) AS subquery ORDER BY "xata.createdAt" DESC'
+        f"""SELECT "sessionId", "content"
+FROM (
+    SELECT DISTINCT ON ("sessionId") "sessionId", "xata.createdAt", "content"
+    FROM "tiangong_memory"
+    WHERE "additionalKwargs"->>'id' = '{username}'
+    ORDER BY "sessionId" DESC, "xata.createdAt" ASC
+) AS subquery"""
     )
     records = response["records"]
     for record in records:
@@ -274,7 +280,13 @@ def get_xata_db(uploaded_files):
                 full_text = docs[0].page_content
 
             chunk = text_splitter.create_documents(
-                texts=[full_text], metadatas=[{"source": uploaded_file.name}]
+                texts=[full_text],
+                metadatas=[
+                    {
+                        "source": uploaded_file.name,
+                        "username": st.session_state["username"],
+                    }
+                ],
             )
             chunks.extend(chunk)
         except:

@@ -112,7 +112,7 @@ if auth:
             timestamp = st.session_state["timestamp"]
 
         try:  # fetch chat history from xata
-            table_map = fetch_chat_history()
+            table_map = fetch_chat_history(st.session_state["username"])
 
             # add new chat to table_map
             table_map_new = {
