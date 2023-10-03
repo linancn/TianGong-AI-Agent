@@ -4,12 +4,14 @@ from datetime import datetime
 
 import streamlit as st
 from langchain.callbacks import StreamlitCallbackHandler
+from langchain.schema import AIMessage, HumanMessage
 from streamlit.web.server.websocket_headers import _get_websocket_headers
 
 import modules.ui.ui_config as ui_config
 import modules.ui.utils as utils
 from modules.agents.memory.agent_history import xata_chat_history
 from modules.agents.st_agent_selector import main_agent
+from modules.sensitivity.sensitivity_checker import check_text_sensitivity
 from modules.ui.utils import (
     check_password,
     delete_chat_history,
@@ -35,7 +37,7 @@ if "username" not in st.session_state:
             "Username", "unknown@unknown.com"
         )
 
-# st.write(st.session_state["username"])
+st.write(st.session_state["username"])
 
 if ui.need_passwd is False:
     auth = True
@@ -80,10 +82,7 @@ if auth:
                 ):
                     st.session_state["uploaded_files"] = uploaded_files
                     with st.spinner(ui.sidebar_file_uploader_spinner):
-                        (
-                            st.session_state["doc_chucks"],
-                            st.session_state["xata_db"],
-                        ) = get_xata_db(uploaded_files)
+                        st.session_state["xata_db"] = get_xata_db(uploaded_files)
 
         st.divider()
 
@@ -93,7 +92,20 @@ if auth:
                 ui.sidebar_newchat_button_label, use_container_width=True
             )
         if new_chat:
-            st.session_state.clear()
+            # avoid rerun for new random email,no use clear()
+            del st.session_state["selected_chat_id"]
+            del st.session_state["timestamp"]
+            del st.session_state["first_run"]
+            del st.session_state["messages"]
+            del st.session_state["xata_history"]
+            try:
+                del st.session_state["uploaded_files"]
+            except:
+                pass
+            try:
+                del st.session_state["xata_db"]
+            except:
+                pass
             st.rerun()
 
         with col_delete:
@@ -102,7 +114,20 @@ if auth:
             )
         if delete_chat:
             delete_chat_history(st.session_state["selected_chat_id"])
-            st.session_state.clear()
+            # avoid rerun for new random email,no use clear()
+            del st.session_state["selected_chat_id"]
+            del st.session_state["timestamp"]
+            del st.session_state["first_run"]
+            del st.session_state["messages"]
+            del st.session_state["xata_history"]
+            try:
+                del st.session_state["uploaded_files"]
+            except:
+                pass
+            try:
+                del st.session_state["xata_db"]
+            except:
+                pass
             st.rerun()
 
         if "first_run" not in st.session_state:
@@ -146,50 +171,73 @@ if auth:
         st.session_state["selected_chat_id"] = current_chat_id
 
         if "first_run" not in st.session_state:
-            st.session_state["history"] = xata_chat_history(_session_id=current_chat_id)
+            st.session_state["xata_history"] = xata_chat_history(
+                _session_id=current_chat_id
+            )
             st.session_state["first_run"] = True
         else:
-            st.session_state["history"] = xata_chat_history(_session_id=current_chat_id)
+            st.session_state["xata_history"] = xata_chat_history(
+                _session_id=current_chat_id
+            )
             st.session_state["messages"] = initialize_messages(
-                st.session_state["history"].messages
+                st.session_state["xata_history"].messages
             )
 
     @utils.enable_chat_history
     def main():
         if user_query := st.chat_input(placeholder=ui.chat_human_placeholder):
             st.chat_message("user", avatar=ui.chat_user_avatar).markdown(user_query)
-            st.session_state["history"].add_user_message(user_query)
-            agent, user_prompt = main_agent(user_query)
-            with st.chat_message("assistant", avatar=ui.chat_ai_avatar):
-                st_cb = StreamlitCallbackHandler(st.container())
-                response = agent().run(
-                    {
-                        "input": user_prompt,
-                        "chat_history": st.session_state["history"].messages,
-                    },
-                    callbacks=[st_cb],
-                )
-                st.markdown(response)
-                # if txt2audio:
-                #     utils.show_audio_player(response)
-                st.session_state["messages"].append(
-                    {
-                        "role": "user",
-                        "avatar": ui.chat_user_avatar,
-                        "content": user_query,
-                    }
-                )
-                st.session_state["messages"].append(
-                    {
-                        "role": "assistant",
-                        "avatar": ui.chat_ai_avatar,
-                        "content": response,
-                    }
-                )
-                st.session_state["history"].add_ai_message(response)
+            st.session_state["messages"].append({"role": "user", "content": user_query})
+            human_message = HumanMessage(
+                content=user_query,
+                additional_kwargs={"id": st.session_state["username"]},
+            )
+            st.session_state["xata_history"].add_message(human_message)
 
-                if len(st.session_state["messages"]) == 3:
-                    st.rerun()
+            # check text sensitivity
+            answer = check_text_sensitivity(user_query)["answer"]
+            if answer is not None:
+                with st.chat_message("assistant", avatar=ui.chat_ai_avatar):
+                    st.markdown(answer)
+                    st.session_state["messages"].append(
+                        {
+                            "role": "assistant",
+                            "content": answer,
+                        }
+                    )
+                    ai_message = AIMessage(
+                        content=answer,
+                        additional_kwargs={"id": st.session_state["username"]},
+                    )
+                    st.session_state["xata_history"].add_message(ai_message)
+            else:
+                agent, user_prompt = main_agent(user_query)
+                with st.chat_message("assistant", avatar=ui.chat_ai_avatar):
+                    st_cb = StreamlitCallbackHandler(st.container())
+                    response = agent().run(
+                        {
+                            "input": user_prompt,
+                            "chat_history": st.session_state["xata_history"].messages,
+                        },
+                        callbacks=[st_cb],
+                    )
+                    st.markdown(response)
+                    # if txt2audio:
+                    #     utils.show_audio_player(response)
+                    st.session_state["messages"].append(
+                        {
+                            "role": "assistant",
+                            "content": response,
+                        }
+                    )
+                    ai_message = AIMessage(
+                        content=response,
+                        additional_kwargs={"id": st.session_state["username"]},
+                    )
+                    st.session_state["xata_history"].add_message(ai_message)
+
+            if len(st.session_state["messages"]) == 3:
+                st.rerun()
 
     if __name__ == "__main__":
         main()

@@ -1,3 +1,7 @@
+"""
+Only for IPs in white list use. Please do not use this module directly.
+"""
+
 import json
 
 import requests

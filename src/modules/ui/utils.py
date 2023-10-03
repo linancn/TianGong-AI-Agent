@@ -285,12 +285,14 @@ def get_xata_db(uploaded_files):
                     {
                         "source": uploaded_file.name,
                         "username": st.session_state["username"],
+                        "sessionId": st.session_state["selected_chat_id"],
                     }
                 ],
             )
             chunks.extend(chunk)
         except:
             pass
+
     if chunks != []:
         embeddings = OpenAIEmbeddings()
         vector_store = XataVectorStore.from_documents(
@@ -304,4 +306,4 @@ def get_xata_db(uploaded_files):
         st.warning(ui.sidebar_file_uploader_error)
         st.stop()
 
-    return chunks, vector_store
+    return vector_store
