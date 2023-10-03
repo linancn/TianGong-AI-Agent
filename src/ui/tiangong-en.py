@@ -104,5 +104,5 @@ ui_data = {
     "chat_user_avatar": "src/static/user.png",
     "chat_ai_welcome": "How can I help you?",
     "chat_ai_spinner": "In progress...",
-    "chat_human_placeholder": "Ask me anything!",
+    "chat_human_placeholder": "Ask me anything, in any language you like!",
 }
