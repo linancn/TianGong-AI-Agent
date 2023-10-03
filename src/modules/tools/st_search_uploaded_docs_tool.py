@@ -26,7 +26,7 @@ class STSearchUploadedDocsTool(BaseTool):
         self, query: str, run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> str:
         """Use the tool synchronously."""
-        docs = st.session_state["faiss_db"].similarity_search(query, k=16)
+        docs = st.session_state["xata_db"].similarity_search(query, k=16)
         docs_list = []
         for doc in docs:
             source_entry = doc.metadata["source"]
@@ -38,7 +38,7 @@ class STSearchUploadedDocsTool(BaseTool):
         self, query: str, run_manager: Optional[AsyncCallbackManagerForToolRun] = None
     ) -> str:
         """Use the tool asynchronously."""
-        docs = st.session_state["faiss_db"].similarity_search(query, k=16)
+        docs = st.session_state["xata_db"].similarity_search(query, k=16)
         docs_list = []
         for doc in docs:
             source_entry = doc.metadata["source"]

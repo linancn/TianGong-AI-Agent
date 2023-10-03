@@ -4,11 +4,20 @@ from datetime import datetime
 
 import streamlit as st
 from langchain.callbacks import StreamlitCallbackHandler
+from streamlit.web.server.websocket_headers import _get_websocket_headers
 
 import modules.ui.ui_config as ui_config
 import modules.ui.utils as utils
-from modules.agents.st_agent_selector import main_agent
 from modules.agents.memory.agent_history import xata_chat_history
+from modules.agents.st_agent_selector import main_agent
+from modules.ui.utils import (
+    check_password,
+    delete_chat_history,
+    fetch_chat_history,
+    get_xata_db,
+    initialize_messages,
+    random_email,
+)
 
 ui = ui_config.create_ui_from_config()
 
@@ -18,11 +27,20 @@ os.environ["XATA_DATABASE_URL"] = st.secrets["xata_db_url"]
 
 st.set_page_config(page_title=ui.page_title, layout="wide", page_icon=ui.page_icon)
 
+if "username" not in st.session_state:
+    if st.secrets["anonymous_allowed"]:
+        st.session_state["username"] = random_email()
+    else:
+        st.session_state["username"] = _get_websocket_headers().get(
+            "Username", "unknown@unknown.com"
+        )
+
+# st.write(st.session_state["username"])
 
 if ui.need_passwd is False:
     auth = True
 else:
-    auth = utils.check_password()
+    auth = check_password()
 
 
 if auth:
@@ -64,8 +82,8 @@ if auth:
                     with st.spinner(ui.sidebar_file_uploader_spinner):
                         (
                             st.session_state["doc_chucks"],
-                            st.session_state["faiss_db"],
-                        ) = utils.get_faiss_db(uploaded_files)
+                            st.session_state["xata_db"],
+                        ) = get_xata_db(uploaded_files)
 
         st.divider()
 
@@ -83,7 +101,7 @@ if auth:
                 ui.sidebar_delete_button_label, use_container_width=True
             )
         if delete_chat:
-            utils.delete_chat_history(st.session_state["selected_chat_id"])
+            delete_chat_history(st.session_state["selected_chat_id"])
             st.session_state.clear()
             st.rerun()
 
@@ -94,7 +112,7 @@ if auth:
             timestamp = st.session_state["timestamp"]
 
         try:  # fetch chat history from xata
-            table_map = utils.fetch_chat_history()
+            table_map = fetch_chat_history()
 
             # add new chat to table_map
             table_map_new = {
@@ -132,7 +150,7 @@ if auth:
             st.session_state["first_run"] = True
         else:
             st.session_state["history"] = xata_chat_history(_session_id=current_chat_id)
-            st.session_state["messages"] = utils.initialize_messages(
+            st.session_state["messages"] = initialize_messages(
                 st.session_state["history"].messages
             )
 

@@ -1,3 +1,5 @@
+import random
+import string
 import tempfile
 import time
 from datetime import datetime
@@ -12,13 +14,24 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import FAISS
+from langchain.vectorstores.xata import XataVectorStore
 from xata.client import XataClient
 
 from ..agents.memory.agent_history import xata_chat_history
 from . import ui_config
 
 ui = ui_config.create_ui_from_config()
+
+
+def random_email(domain="example.com"):
+    # username length is 5 to 10
+    username_length = random.randint(5, 10)
+    username = "".join(
+        random.choice(string.ascii_lowercase + string.digits)
+        for _ in range(username_length)
+    )
+
+    return f"{username}@{domain}"
 
 
 # decorator
@@ -244,7 +257,10 @@ def initialize_messages(history):
     return messages
 
 
-def get_faiss_db(uploaded_files):
+def get_xata_db(uploaded_files):
+    xata_api_key = st.secrets["xata_api_key"]
+    xata_db_url = st.secrets["xata_db_url"]
+
     text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=200, chunk_overlap=10
     )
@@ -265,9 +281,15 @@ def get_faiss_db(uploaded_files):
             pass
     if chunks != []:
         embeddings = OpenAIEmbeddings()
-        faiss_db = FAISS.from_documents(chunks, embeddings)
+        vector_store = XataVectorStore.from_documents(
+            chunks,
+            embeddings,
+            api_key=xata_api_key,
+            db_url=xata_db_url,
+            table_name="tiangong_chunks",
+        )
     else:
         st.warning(ui.sidebar_file_uploader_error)
         st.stop()
 
-    return chunks, faiss_db
+    return chunks, vector_store
