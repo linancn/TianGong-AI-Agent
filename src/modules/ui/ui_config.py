@@ -41,6 +41,7 @@ class UI:
     sidebar_newchat_button_label: str
     sidebar_delete_button_label: str
     chat_ai_avatar: str
+    chat_user_avatar: str
     chat_ai_welcome: str
     chat_ai_spinner: str
     chat_human_placeholder: str

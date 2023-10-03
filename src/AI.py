@@ -99,9 +99,7 @@ if auth:
 
             # add new chat to table_map
             table_map_new = {
-                str(timestamp): datetime.fromtimestamp(timestamp).strftime(
-                    "%Y-%m-%d"
-                )
+                str(timestamp): datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
                 + " : New Chat"
             }
 
@@ -109,9 +107,7 @@ if auth:
             table_map = table_map_new | table_map
         except:  # if no chat history in xata
             table_map = {
-                str(timestamp): datetime.fromtimestamp(timestamp).strftime(
-                    "%Y-%m-%d"
-                )
+                str(timestamp): datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
                 + " : New Chat"
             }
 
@@ -144,7 +140,7 @@ if auth:
     @utils.enable_chat_history
     def main():
         if user_query := st.chat_input(placeholder=ui.chat_human_placeholder):
-            st.chat_message("user").markdown(user_query)
+            st.chat_message("user", avatar=ui.chat_user_avatar).markdown(user_query)
             st.session_state["history"].add_user_message(user_query)
             agent, user_prompt = main_agent(user_query)
             with st.chat_message("assistant", avatar=ui.chat_ai_avatar):
@@ -160,7 +156,11 @@ if auth:
                 # if txt2audio:
                 #     utils.show_audio_player(response)
                 st.session_state["messages"].append(
-                    {"role": "user", "content": user_query}
+                    {
+                        "role": "user",
+                        "avatar": ui.chat_user_avatar,
+                        "content": user_query,
+                    }
                 )
                 st.session_state["messages"].append(
                     {

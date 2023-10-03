@@ -30,10 +30,7 @@ def enable_chat_history(func):
             }
         ]
     for msg in st.session_state["messages"]:
-        if msg["role"] == "user":
-            st.chat_message(msg["role"]).markdown(msg["content"])
-        elif msg["role"] == "assistant":
-            st.chat_message(msg["role"], avatar=msg["avatar"]).markdown(msg["content"])
+        st.chat_message(msg["role"], avatar=msg["avatar"]).markdown(msg["content"])
 
     def execute(*args, **kwargs):
         func(*args, **kwargs)
@@ -214,7 +211,11 @@ def delete_chat_history(session_id):
 
 def convert_history_to_message(history):
     if isinstance(history, HumanMessage):
-        return {"role": "user", "content": history.content}
+        return {
+            "role": "user",
+            "avatar": ui.chat_user_avatar,
+            "content": history.content,
+        }
     elif isinstance(history, AIMessage):
         return {
             "role": "assistant",
