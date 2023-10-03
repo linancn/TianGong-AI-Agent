@@ -1,27 +1,33 @@
 FROM python:3.11.5-bullseye
 
-# 安装依赖
+# Install dependencies
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install -y libmagic-dev poppler-utils tesseract-ocr libreoffice pandoc
+RUN apt-get install -y libmagic-dev poppler-utils tesseract-ocr libreoffice pandoc nginx supervisor
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 
-# 工作目录，这个目录对应于镜像内的工作目录，后面的所有涉及到路径的操作都可以
-# 使用WORKDIR的相对路径来指定
+# Set the working directory in the container
 WORKDIR /app
 
-# 拷贝requirements.txt 到 镜像中/app/requirements.txt  
+# Supervisor configurations
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Nginx configurations
+COPY docker/default /etc/nginx/sites-available/default
+
+# Copy the requirements.txt into the container at /app/requirements.txt
 COPY requirements.txt requirements.txt
 
-# 升级pip
+# Upgrade pip
 RUN pip install --upgrade pip
 
-# 安装pip包
+# Install pip packages
 RUN pip install -r requirements.txt --upgrade
 
-# 将当前文件中的目录复制到/app目录下
-COPY . .
+# Copy the current directory contents into the container at /app
+COPY .streamlit/  ./.streamlit/
+COPY src/ ./src/
 
-# 运行脚本
-CMD ["streamlit", "run", "src/AI.py"]
+# Command to run supervisord
+CMD ["/usr/bin/supervisord"]
