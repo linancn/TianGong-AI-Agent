@@ -10,7 +10,7 @@ from langchain.schema import SystemMessage
 from . import (
     chat_conversational_react_description_agent as chat_conversational_react_description_agent,
 )
-from . import zero_shot_react_description_agent as zero_shot_react_description_agent
+from . import st_zero_shot_react_description_agent as st_zero_shot_react_description_agent
 
 llm_model = st.secrets["llm_model"]
 langchain_verbose = st.secrets["langchain_verbose"]
@@ -88,9 +88,9 @@ def agent_selector_func_calling_chain():
 def main_agent(query):
     response = agent_selector_func_calling_chain().run(query)
     agent_type = response.get("agent_type")
-    if agent_type == "zero_shot_react_description_agent":
+    if agent_type == "st_zero_shot_react_description_agent":
         prompt = f"""Provide a clear, well-organized respond to the following question of "{query}" in its original language. Give corresponding detailed sources with urls, if possible."""
-        return (zero_shot_react_description_agent.main_agent, prompt)
+        return (st_zero_shot_react_description_agent.main_agent, prompt)
     elif agent_type == "chat_conversational_react_description_agent":
         prompt = f"""Provide a clear, well-organized respond to the following question of "{query}" in its original language. Give corresponding detailed sources with urls, if possible."""
         return (

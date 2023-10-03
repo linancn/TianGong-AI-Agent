@@ -5,7 +5,6 @@ from datetime import datetime
 import streamlit as st
 from langchain.callbacks import StreamlitCallbackHandler
 
-import modules.tools.tools as tools
 import modules.ui.ui_config as ui_config
 import modules.ui.utils as utils
 from modules.agents.agent_selector import main_agent
@@ -66,7 +65,7 @@ if auth:
                         (
                             st.session_state["doc_chucks"],
                             st.session_state["faiss_db"],
-                        ) = tools.get_faiss_db(uploaded_files)
+                        ) = utils.get_faiss_db(uploaded_files)
 
         st.divider()
 

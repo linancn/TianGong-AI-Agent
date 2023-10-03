@@ -1,3 +1,4 @@
+import tempfile
 import time
 from datetime import datetime
 from io import BytesIO
@@ -6,12 +7,16 @@ import streamlit as st
 from gtts import gTTS, gTTSError
 from langchain.chains.openai_functions import create_structured_output_chain
 from langchain.chat_models import ChatOpenAI
+from langchain.document_loaders import UnstructuredFileLoader
+from langchain.embeddings import OpenAIEmbeddings
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.vectorstores import FAISS
 from xata.client import XataClient
 
-from . import ui_config
 from ..agents.agent_history import xata_chat_history
+from . import ui_config
 
 ui = ui_config.create_ui_from_config()
 
@@ -237,3 +242,32 @@ def initialize_messages(history):
     messages.insert(0, welcome_message)
 
     return messages
+
+
+def get_faiss_db(uploaded_files):
+    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+        chunk_size=200, chunk_overlap=10
+    )
+    chunks = []
+    for uploaded_file in uploaded_files:
+        try:
+            with tempfile.NamedTemporaryFile(delete=True) as fp:
+                fp.write(uploaded_file.read())
+                loader = UnstructuredFileLoader(file_path=fp.name)
+                docs = loader.load()
+                full_text = docs[0].page_content
+
+            chunk = text_splitter.create_documents(
+                texts=[full_text], metadatas=[{"source": uploaded_file.name}]
+            )
+            chunks.extend(chunk)
+        except:
+            pass
+    if chunks != []:
+        embeddings = OpenAIEmbeddings()
+        faiss_db = FAISS.from_documents(chunks, embeddings)
+    else:
+        st.warning(ui.sidebar_file_uploader_error)
+        st.stop()
+
+    return chunks, faiss_db
