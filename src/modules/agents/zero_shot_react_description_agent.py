@@ -12,6 +12,7 @@ from langchain.tools.python.tool import PythonREPLTool
 from ..tools.search_internet_tool import SearchInternetTool
 from ..tools.search_vectordb_tool import SearchVectordbTool
 from ..tools.search_arxiv_tool import SearchArxivTool
+from ..tools.search_wikipedia_tool import SearchWikipediaTool
 
 
 def main_agent():
@@ -29,6 +30,7 @@ def main_agent():
         SearchInternetTool(),
         SearchVectordbTool(),
         SearchArxivTool(),
+        SearchWikipediaTool(),
         PythonREPLTool(),
     ]
     agent = initialize_agent(
