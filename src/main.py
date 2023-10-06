@@ -11,13 +11,13 @@ from langchain.callbacks.streaming_aiter import AsyncIteratorCallbackHandler
 from langchain.schema import LLMResult
 from pydantic import BaseModel
 
-import modules.agents.st_zero_shot_react_description_agent as st_zero_shot_react_description_agent
+from .modules.agents.st_zero_shot_react_description_agent import main_agent
 
 os.environ["OPENAI_API_KEY"] = st.secrets["openai_api_key"]
 
 app = FastAPI()
 
-current_agent = st_zero_shot_react_description_agent.main_agent()
+current_agent = main_agent()
 
 
 class AsyncCallbackHandler(AsyncIteratorCallbackHandler):
