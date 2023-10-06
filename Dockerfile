@@ -14,7 +14,7 @@ WORKDIR /app
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Nginx configurations
-COPY docker/default /etc/nginx/sites-available/default
+COPY docker/default /etc/nginx/sites-enabled/default
 
 # Copy the requirements.txt into the container at /app/requirements.txt
 COPY requirements.txt requirements.txt
