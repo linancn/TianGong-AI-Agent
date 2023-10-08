@@ -14,6 +14,9 @@ from modules.agents.st_agent_selector import main_agent
 from modules.sensitivity.sensitivity_checker import check_text_sensitivity
 from modules.ui.utils import (
     check_password,
+    fetch_embedding_files,
+    clear_embedding_files,
+    delete_embedding_files,
     delete_chat_history,
     fetch_chat_history,
     get_xata_db,
@@ -37,7 +40,7 @@ if "username" not in st.session_state:
             "Username", "unknown@unknown.com"
         )
 
-st.write(st.session_state["username"])
+# st.write(st.session_state["username"])
 
 if ui.need_passwd is False:
     auth = True
@@ -83,105 +86,193 @@ if auth:
                     st.session_state["uploaded_files"] = uploaded_files
                     with st.spinner(ui.sidebar_file_uploader_spinner):
                         st.session_state["xata_db"] = get_xata_db(uploaded_files)
-
-        st.divider()
-
-        col_newchat, col_delete = st.columns([1, 1])
-        with col_newchat:
-            new_chat = st.button(
-                ui.sidebar_newchat_button_label, use_container_width=True
+        try:
+            st.session_state["embedding_files"] = fetch_embedding_files(
+                username=st.session_state["username"],
+                session_id=st.session_state["selected_chat_id"],
             )
-        if new_chat:
-            # avoid rerun for new random email,no use clear()
-            del st.session_state["selected_chat_id"]
-            del st.session_state["timestamp"]
-            del st.session_state["first_run"]
-            del st.session_state["messages"]
-            del st.session_state["xata_history"]
-            try:
-                del st.session_state["uploaded_files"]
-            except:
-                pass
-            try:
-                del st.session_state["xata_db"]
-            except:
-                pass
-            st.rerun()
+        except:
+            pass
 
-        with col_delete:
-            delete_chat = st.button(
-                ui.sidebar_delete_button_label, use_container_width=True
+        if "embedding_files" in st.session_state:
+            with st.expander(ui.sidebar_embedded_files_title, expanded=True):
+                col_clear_files, col_delete_file = st.columns([1, 1])
+
+                with col_clear_files:
+                    clear_files = st.button(
+                        ui.sidebar_clear_all_files_button_label,
+                        use_container_width=True,
+                    )
+
+                with col_delete_file:
+                    delete_files = st.button(
+                        ui.sidebar_delete_file_button_label, use_container_width=True
+                    )
+
+                options = st.multiselect(
+                    label=ui.sidebar_embedded_files_title,
+                    label_visibility="collapsed",
+                    options=st.session_state["embedding_files"].source,
+                )
+
+                df = st.dataframe(
+                    st.session_state["embedding_files"],
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+                if clear_files:
+                    response = clear_embedding_files(
+                        username=st.session_state["username"],
+                        session_id=st.session_state["selected_chat_id"],
+                    )
+                    if response.status_code == 200:
+                        del options
+                        del st.session_state["embedding_files"]
+                        del df
+                        st.rerun()
+
+                if delete_files:
+                    response = delete_embedding_files(
+                        username=st.session_state["username"],
+                        session_id=st.session_state["selected_chat_id"],
+                        options=options,
+                    )
+                    if response.status_code == 200:
+                        del options
+                        del st.session_state["embedding_files"]
+                        del df
+                        st.rerun()
+
+        with st.expander(ui.sidebar_chat_title, expanded=True):
+            col_newchat, col_delete = st.columns([1, 1])
+            with col_newchat:
+                new_chat = st.button(
+                    ui.sidebar_newchat_button_label, use_container_width=True
+                )
+            if new_chat:
+                # avoid rerun for new random email,no use clear()
+                del st.session_state["selected_chat_id"]
+                del st.session_state["timestamp"]
+                del st.session_state["first_run"]
+                del st.session_state["messages"]
+                del st.session_state["xata_history"]
+                try:
+                    del st.session_state["uploaded_files"]
+                except:
+                    pass
+                try:
+                    del st.session_state["xata_db"]
+                except:
+                    pass
+                st.rerun()
+
+            with col_delete:
+                delete_chat = st.button(
+                    ui.sidebar_deletechat_button_label, use_container_width=True
+                )
+            if delete_chat:
+                delete_chat_history(st.session_state["selected_chat_id"])
+                # avoid rerun for new random email,no use clear()
+                del st.session_state["selected_chat_id"]
+                del st.session_state["timestamp"]
+                del st.session_state["first_run"]
+                del st.session_state["messages"]
+                del st.session_state["xata_history"]
+                try:
+                    del st.session_state["uploaded_files"]
+                except:
+                    pass
+                try:
+                    del st.session_state["xata_db"]
+                except:
+                    pass
+                st.rerun()
+
+            if "first_run" not in st.session_state:
+                timestamp = time.time()
+                st.session_state["timestamp"] = timestamp
+            else:
+                timestamp = st.session_state["timestamp"]
+
+            try:  # fetch chat history from xata
+                table_map = fetch_chat_history(st.session_state["username"])
+
+                # add new chat to table_map
+                table_map_new = {
+                    str(timestamp): datetime.fromtimestamp(timestamp).strftime(
+                        "%Y-%m-%d"
+                    )
+                    + " : New Chat"
+                }
+
+                # Merge two dicts
+                table_map = table_map_new | table_map
+            except:  # if no chat history in xata
+                table_map = {
+                    str(timestamp): datetime.fromtimestamp(timestamp).strftime(
+                        "%Y-%m-%d"
+                    )
+                    + " : New Chat"
+                }
+
+            # Get all keys from table_map into a list
+            entries = list(table_map.keys())
+
+            # Initialize session_state variables if they don't exist
+            if "selected_chat_id" not in st.session_state:
+                st.session_state["selected_chat_id"] = entries[0]
+
+            if "embedding_files_checked" not in st.session_state:
+                st.session_state["embedding_files_checked"] = False
+
+            if "need_rerun" not in st.session_state:
+                st.session_state["need_rerun"] = False
+
+            if "first_run" not in st.session_state:
+                st.session_state["first_run"] = False
+
+            # Update the selectbox with the current selected_chat_id value
+            current_chat_id = st.selectbox(
+                label=ui.sidebar_chat_title,
+                label_visibility="collapsed",
+                options=entries,
+                format_func=lambda x: table_map[x],
             )
-        if delete_chat:
-            delete_chat_history(st.session_state["selected_chat_id"])
-            # avoid rerun for new random email,no use clear()
-            del st.session_state["selected_chat_id"]
-            del st.session_state["timestamp"]
-            del st.session_state["first_run"]
-            del st.session_state["messages"]
-            del st.session_state["xata_history"]
-            try:
-                del st.session_state["uploaded_files"]
-            except:
-                pass
-            try:
-                del st.session_state["xata_db"]
-            except:
-                pass
-            st.rerun()
 
-        if "first_run" not in st.session_state:
-            timestamp = time.time()
-            st.session_state["timestamp"] = timestamp
-        else:
-            timestamp = st.session_state["timestamp"]
+            if current_chat_id != st.session_state["selected_chat_id"]:
+                st.session_state["embedding_files_checked"] = False
 
-        try:  # fetch chat history from xata
-            table_map = fetch_chat_history(st.session_state["username"])
+            # Save the selected value back to session state
+            st.session_state["selected_chat_id"] = current_chat_id
 
-            # add new chat to table_map
-            table_map_new = {
-                str(timestamp): datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
-                + " : New Chat"
-            }
-
-            # Merge two dicts
-            table_map = table_map_new | table_map
-        except:  # if no chat history in xata
-            table_map = {
-                str(timestamp): datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
-                + " : New Chat"
-            }
-
-        # Get all keys from table_map into a list
-        entries = list(table_map.keys())
-        # Check if selected_chat_id exists in session_state, if not set default as the first entry
-        if "selected_chat_id" not in st.session_state:
-            st.session_state["selected_chat_id"] = entries[0]
-
-        # Update the selectbox with the current selected_chat_id value
-        current_chat_id = st.selectbox(
-            label=ui.current_chat_title,
-            label_visibility="collapsed",
-            options=entries,
-            format_func=lambda x: table_map[x],
-        )
-
-        # Save the selected value back to session state
-        st.session_state["selected_chat_id"] = current_chat_id
-
-        if "first_run" not in st.session_state:
             st.session_state["xata_history"] = xata_chat_history(
                 _session_id=current_chat_id
             )
-            st.session_state["first_run"] = True
-        else:
-            st.session_state["xata_history"] = xata_chat_history(
-                _session_id=current_chat_id
-            )
-            st.session_state["messages"] = initialize_messages(
-                st.session_state["xata_history"].messages
-            )
+
+            if not st.session_state["first_run"]:
+                st.session_state["first_run"] = True
+            else:
+                st.session_state["messages"] = initialize_messages(
+                    st.session_state["xata_history"].messages
+                )
+
+                try:
+                    st.session_state["embedding_files"] = fetch_embedding_files(
+                        username=st.session_state["username"],
+                        session_id=st.session_state["selected_chat_id"],
+                    )
+                    st.session_state["need_rerun"] = True
+                except:
+                    pass
+
+                if (
+                    st.session_state["need_rerun"]
+                    and not st.session_state["embedding_files_checked"]
+                ):
+                    st.session_state["embedding_files_checked"] = True
+                    st.session_state["need_rerun"] = False
+                    st.rerun()
 
     @utils.enable_chat_history
     def main():

@@ -1,10 +1,12 @@
 import random
+import re
 import string
 import tempfile
 import time
 from datetime import datetime
 from io import BytesIO
 
+import pandas as pd
 import streamlit as st
 from gtts import gTTS, gTTSError
 from langchain.chains.openai_functions import create_structured_output_chain
@@ -198,30 +200,82 @@ def show_audio_player(ai_content: str) -> None:
         st.error(err)
 
 
+def fetch_embedding_files(username: str, session_id: str) -> pd.DataFrame:
+    """Fetch the embedding files."""
+    client = XataClient()
+    query = """SELECT DISTINCT "source" FROM "tiangong_chunks" WHERE "username" = $1 AND "sessionId" = $2 ORDER BY "source" ASC"""
+    response = client.sql().query(statement=query, params=(username, session_id))
+
+    df = pd.DataFrame(response["records"])
+
+    return df
+
+
+def clear_embedding_files(username: str, session_id: str) -> pd.DataFrame:
+    """Clear the embedding files."""
+    client = XataClient()
+    query = (
+        """DELETE FROM "tiangong_chunks" WHERE "username" = $1 AND "sessionId" = $2"""
+    )
+    response = client.sql().query(statement=query, params=(username, session_id))
+
+    return response
+
+
+def delete_embedding_files(username: str, session_id: str, options: list):
+    """Delete the embedding files."""
+    client = XataClient()
+
+    placeholders = ",".join([f"${i+3}" for i, _ in enumerate(options)])
+    query = f"""DELETE FROM "tiangong_chunks" WHERE "username" = $1 AND "sessionId" = $2 AND "source" IN ({placeholders})"""
+    params = (username, session_id) + tuple(options)
+    response = client.sql().query(statement=query, params=params)
+
+    return response
+
+
+def is_valid_email(email: str) -> bool:
+    """
+    Check if the given string is a valid email address.
+
+    Args:
+    - email (str): String to check.
+
+    Returns:
+    - bool: True if valid email, False otherwise.
+    """
+    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    return bool(re.match(pattern, email))
+
+
 def fetch_chat_history(username: str):
     """Fetch the chat history."""
-    client = XataClient()
-    response = client.sql().query(
-        f"""SELECT "sessionId", "content"
-FROM (
-    SELECT DISTINCT ON ("sessionId") "sessionId", "xata.createdAt", "content"
-    FROM "tiangong_memory"
-    WHERE "additionalKwargs"->>'id' = '{username}'
-    ORDER BY "sessionId" DESC, "xata.createdAt" ASC
-) AS subquery"""
-    )
-    records = response["records"]
-    for record in records:
-        timestamp = float(record["sessionId"])
-        record["entry"] = (
-            datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
-            + " : "
-            + record["content"]
+    if is_valid_email(username):
+        client = XataClient()
+        # No parameterized query because the Xata Client.
+        response = client.sql().query(
+            f"""SELECT "sessionId", "content"
+    FROM (
+        SELECT DISTINCT ON ("sessionId") "sessionId", "xata.createdAt", "content"
+        FROM "tiangong_memory"
+        WHERE "additionalKwargs"->>'id' = '{username}'
+        ORDER BY "sessionId" DESC, "xata.createdAt" ASC
+    ) AS subquery"""
         )
+        records = response["records"]
+        for record in records:
+            timestamp = float(record["sessionId"])
+            record["entry"] = (
+                datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
+                + " : "
+                + record["content"]
+            )
 
-    table_map = {item["sessionId"]: item["entry"] for item in records}
+        table_map = {item["sessionId"]: item["entry"] for item in records}
 
-    return table_map
+        return table_map
+    else:
+        return {}
 
 
 def delete_chat_history(session_id):

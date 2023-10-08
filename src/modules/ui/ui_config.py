@@ -37,9 +37,12 @@ class UI:
     sidebar_file_uploader_title: str
     sidebar_file_uploader_spinner: str
     sidebar_file_uploader_error: str
-    current_chat_title: str
+    sidebar_embedded_files_title: str
+    sidebar_clear_all_files_button_label: str
+    sidebar_delete_file_button_label: str
+    sidebar_chat_title: str
     sidebar_newchat_button_label: str
-    sidebar_delete_button_label: str
+    sidebar_deletechat_button_label: str
     chat_ai_avatar: str
     chat_user_avatar: str
     chat_ai_welcome: str
