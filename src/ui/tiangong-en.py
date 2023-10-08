@@ -68,7 +68,7 @@ ui_data = {
     "sidebar_title": "TianGong Agent",
     "sidebar_subheader": "AI for Science 🔬 - Intelligent Agents",
     "sidebar_markdown": """
-        <div style="position: fixed; bottom: 0px; height:110px; width: 315px; font-size: 14px; font-weight: bold; background-color: #262730;">
+        <div style="position: fixed; left:25px; bottom: 10px; height:110px; width: 315px; font-size: 14px; font-weight: bold; background-color: #262730;">
             <table style="border: 0; position: absolute; bottom: 35px;">
                 <tr style="border: 0; width:315px; ">
                     <td class="thulogo" style="border: 0;"></td>
