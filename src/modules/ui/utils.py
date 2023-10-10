@@ -3,10 +3,12 @@ import re
 import string
 import tempfile
 import time
+from collections import Counter
 from datetime import datetime
 from io import BytesIO
 
 import pandas as pd
+import pdfplumber
 import streamlit as st
 from gtts import gTTS, gTTSError
 from langchain.chains.openai_functions import create_structured_output_chain
@@ -317,6 +319,161 @@ def initialize_messages(history):
     return messages
 
 
+def parse_paper(pdf_stream):
+    # logging.info("Parsing paper")
+    pdf_obj = pdfplumber.open(pdf_stream)
+    number_of_pages = len(pdf_obj.pages)
+    # logging.info(f"Total number of pages: {number_of_pages}")
+    full_text = ""
+    ismisc = False
+    for i in range(number_of_pages):
+        page = pdf_obj.pages[i]
+        if i == 0:
+            isfirstpage = True
+        else:
+            isfirstpage = False
+
+        page_text = []
+        sentences = []
+        processed_text = []
+
+        def visitor_body(text, isfirstpage, x, top, bottom, fontSize, ismisc):
+            # ignore header/footer
+            if isfirstpage:
+                if (top > 200 and bottom < 720) and (len(text.strip()) > 1):
+                    sentences.append(
+                        {
+                            "fontsize": fontSize,
+                            "text": " " + text.strip().replace("\x03", ""),
+                            "x": x,
+                            "y": top,
+                        }
+                    )
+            else:  # not first page
+                if (
+                    (top > 70 and bottom < 720)
+                    and (len(text.strip()) > 1)
+                    and not ismisc
+                ):  # main text region
+                    sentences.append(
+                        {
+                            "fontsize": fontSize,
+                            "text": " " + text.strip().replace("\x03", ""),
+                            "x": x,
+                            "y": top,
+                        }
+                    )
+                elif (top > 70 and bottom < 720) and (len(text.strip()) > 1) and ismisc:
+                    pass
+
+        extracted_words = page.extract_words(
+            x_tolerance=1,
+            y_tolerance=3,
+            keep_blank_chars=False,
+            use_text_flow=True,
+            horizontal_ltr=True,
+            vertical_ttb=True,
+            extra_attrs=["fontname", "size"],
+            split_at_punctuation=False,
+        )
+
+        # Treat the first page, main text, and references differently, specifically targeted at headers
+        # Define a list of keywords to ignore
+        # Online is for Nauture papers
+        keywords_for_misc = [
+            "References",
+            "REFERENCES",
+            "Bibliography",
+            "BIBLIOGRAPHY",
+            "Acknowledgements",
+            "ACKNOWLEDGEMENTS",
+            "Acknowledgments",
+            "ACKNOWLEDGMENTS",
+            "Acknowledgement",
+            "参考文献",
+            "致谢",
+            "謝辞",
+            "謝",
+            "Online",
+        ]
+
+        prev_word_size = None
+        prev_word_font = None
+        # Loop through the extracted words
+        for extracted_word in extracted_words:
+            # Strip the text and remove any special characters
+            text = extracted_word["text"].strip().replace("\x03", "")
+
+            # Check if the text contains any of the keywords to ignore
+            if any(keyword in text for keyword in keywords_for_misc) and (
+                prev_word_size != extracted_word["size"]
+                or prev_word_font != extracted_word["fontname"]
+            ):
+                ismisc = True
+
+            prev_word_size = extracted_word["size"]
+            prev_word_font = extracted_word["fontname"]
+
+            # Call the visitor_body function with the relevant arguments
+            visitor_body(
+                text,
+                isfirstpage,
+                extracted_word["x0"],
+                extracted_word["top"],
+                extracted_word["bottom"],
+                extracted_word["size"],
+                ismisc,
+            )
+
+        if sentences:
+            for sentence in sentences:
+                page_text.append(sentence)
+
+        blob_font_sizes = []
+        blob_font_size = None
+        blob_text = ""
+        processed_text = ""
+        tolerance = 1
+
+        # Preprocessing for main text font size
+        if page_text != []:
+            if len(page_text) == 1:
+                blob_font_sizes.append(page_text[0]["fontsize"])
+            else:
+                for t in page_text:
+                    blob_font_sizes.append(t["fontsize"])
+            blob_font_size = Counter(blob_font_sizes).most_common(1)[0][0]
+
+        if page_text != []:
+            if len(page_text) == 1:
+                if (
+                    blob_font_size - tolerance
+                    <= page_text[0]["fontsize"]
+                    <= blob_font_size + tolerance
+                ):
+                    processed_text += page_text[0]["text"]
+                    # processed_text.append({"text": page_text[0]["text"], "page": i + 1})
+            else:
+                for t in range(len(page_text)):
+                    if (
+                        blob_font_size - tolerance
+                        <= page_text[t]["fontsize"]
+                        <= blob_font_size + tolerance
+                    ):
+                        blob_text += f"{page_text[t]['text']}"
+                        if len(blob_text) >= 500:  # set the length of a data chunk
+                            processed_text += blob_text
+                            # processed_text.append({"text": blob_text, "page": i + 1})
+                            blob_text = ""
+                        elif t == len(page_text) - 1:  # last element
+                            processed_text += blob_text
+                            # processed_text.append({"text": blob_text, "page": i + 1})
+            full_text += processed_text
+
+    # logging.info("Done parsing paper")
+    return full_text
+
+
 def get_xata_db(uploaded_files):
     xata_api_key = st.secrets["xata_api_key"]
     xata_db_url = st.secrets["xata_db_url"]
@@ -329,9 +486,12 @@ def get_xata_db(uploaded_files):
         try:
             with tempfile.NamedTemporaryFile(delete=True) as fp:
                 fp.write(uploaded_file.read())
-                loader = UnstructuredFileLoader(file_path=fp.name)
-                docs = loader.load()
-                full_text = docs[0].page_content
+                if uploaded_file.type == 'application/pdf':
+                    full_text = parse_paper(fp)
+                else:
+                    loader = UnstructuredFileLoader(file_path=fp.name)
+                    docs = loader.load()
+                    full_text = docs[0].page_content
 
             chunk = text_splitter.create_documents(
                 texts=[full_text],

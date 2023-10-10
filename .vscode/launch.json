@@ -13,6 +13,15 @@
             // "justMyCode": false,
             "args": ["run", "src/AI.py"]
         },
+        {   
+            "name": "Streamlit_temp",
+            "type": "python",
+            "request": "launch",
+            "module": "streamlit",
+            "cwd": "${workspaceFolder}",
+            // "justMyCode": false,
+            "args": ["run", "src/AI_temp.py"]
+        },
         {
             "name": "FastAPI",
             "type": "python",
