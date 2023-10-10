@@ -17,7 +17,7 @@ from langchain.embeddings import OpenAIEmbeddings
 
 class SummarizeTool(BaseTool):
     name = "summarize_tool"
-    description = "Summarize the uploaded documents. No need to input any input, this tool will automatically fetch the uploaded documents."
+    description = "Return information of the original query from uploaded documents, this tool will automatically fetch the uploaded documents."
 
     class InputSchema(BaseModel):
         query: str
@@ -78,7 +78,7 @@ class SummarizeTool(BaseTool):
             table_name=table_name,
         )
 
-        docs = vector_store.similarity_search("material flow analysis", k=10)
+        docs = vector_store.similarity_search("material flow", k=80)
         response = chain.run(docs)
 
         return response

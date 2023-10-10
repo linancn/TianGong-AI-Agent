@@ -6,24 +6,15 @@ from ..tools.test_summarize_tool import SummarizeTool
 
 
 def main_agent():
+    llm_model = st.secrets["llm_model"]
     langchain_verbose = st.secrets["langchain_verbose"]
-    openrouter_api_key = st.secrets["openrouter_api_key"]
-    openrouter_api_base = st.secrets["openrouter_api_base"]
-
-    selected_model = "anthropic/claude-2"
-    # selected_model = "openai/gpt-3.5-turbo-16k"
-    # selected_model = "openai/gpt-4-32k"
-    # selected_model = "meta-llama/llama-2-70b-chat"
 
     llm_chat = ChatOpenAI(
-        model_name=selected_model,
-        # temperature=0,
+        model=llm_model,
+        temperature=0,
         streaming=True,
-        # verbose=langchain_verbose,
-        openai_api_key=openrouter_api_key,
-        openai_api_base=openrouter_api_base,
-        headers={"HTTP-Referer": "http://localhost"},
-        # callbacks=[StreamingStdOutCallbackHandler],
+        verbose=langchain_verbose,
+        callbacks=[],
     )
 
     tools = [SummarizeTool()]

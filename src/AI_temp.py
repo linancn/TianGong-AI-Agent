@@ -11,6 +11,7 @@ import modules.ui.ui_config as ui_config
 import modules.ui.utils as utils
 from modules.agents.memory.agent_history import xata_chat_history
 from modules.tools.test_summarize import summarize_docs
+from modules.agents.test_summarize_agent import main_agent
 from modules.sensitivity.sensitivity_checker import check_text_sensitivity
 from modules.ui.utils import (
     check_password,
@@ -279,14 +280,20 @@ if auth:
     @utils.enable_chat_history
     def main():
         if generate:
-            user_query = "Summarize the uploaded documents."
+            user_query = "Get information from uploaded documents."
             human_message = HumanMessage(
                 content=user_query,
                 additional_kwargs={"id": st.session_state["username"]},
             )
             st.session_state["xata_history"].add_message(human_message)
 
-            response = summarize_docs()
+            # response = summarize_docs()
+            agent = main_agent
+            response = agent().run(
+                {
+                    "input": user_query,
+                }
+            )
 
             ai_message = AIMessage(
                 content=response,
