@@ -7,12 +7,11 @@ from langchain.callbacks.manager import (
 )
 from langchain.chains.summarize import load_summarize_chain
 from langchain.chat_models import ChatOpenAI
+from langchain.embeddings import OpenAIEmbeddings
 from langchain.tools import BaseTool
-from langchain.vectorstores.xata import XataVectorStore
 from pydantic import BaseModel
 from xata.client import XataClient
-from langchain.embeddings import OpenAIEmbeddings
-
+from langchain.schema.document import Document
 
 
 class SummarizeTool(BaseTool):
@@ -49,15 +48,42 @@ class SummarizeTool(BaseTool):
 
         return chain
 
-    def fetch_uploaded_docs(self):
-        """Fetch uploaded docs."""
+    def fetch_uploaded_docs_vector(self, query: str, k: int = 16) -> list[Document]:
+        """Fetch uploaded docs in similarity search."""
         username = st.session_state["username"]
         session_id = st.session_state["selected_chat_id"]
-        client = XataClient()
-        query = """SELECT content FROM "tiangong_chunks" WHERE "username" = $1 AND "sessionId" = $2"""
-        response = client.sql().query(statement=query, params=(username, session_id))
+        embeddings = OpenAIEmbeddings()
+        query_vector = embeddings.embed_query(query)
+        results = (
+            XataClient()
+            .data()
+            .vector_search(
+                "tiangong_chunks",
+                {
+                    "queryVector": query_vector,  # array of floats
+                    "column": "embedding",  # column name,
+                    "similarityFunction": "cosineSimilarity",  # space function
+                    "size": k,  # number of results to return
+                    "filter": {
+                        "username": username,
+                        "sessionId": session_id,
+                    },  # filter expression
+                },
+            )
+        )
+        docs = []
+        for record in results["records"]:
+            page_content = record["content"]
+            metadata = {
+                "source": record["source"],
+            }
+            doc = Document(
+                page_content=page_content,
+                metadata=metadata,
+            )
+            docs.append(doc)
 
-        return response
+        return docs
 
     def _run(
         self, query: str, run_manager: Optional[CallbackManagerForToolRun] = None
@@ -66,19 +92,7 @@ class SummarizeTool(BaseTool):
 
         chain = self.main_chain()
 
-        xata_api_key = st.secrets["xata_api_key"]
-        xata_db_url = st.secrets["xata_db_url"]
-        embeddings = OpenAIEmbeddings()
-        table_name="tiangong_chunks"
-
-        vector_store = XataVectorStore(
-            api_key=xata_api_key,
-            db_url=xata_db_url,
-            embedding=embeddings,
-            table_name=table_name,
-        )
-
-        docs = vector_store.similarity_search("material flow", k=80)
+        docs = self.fetch_uploaded_docs_vector(query="material flow", k=5)
         response = chain.run(docs)
 
         return response
