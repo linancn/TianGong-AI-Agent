@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 from datetime import datetime
 from typing import Optional, Type
 
@@ -25,6 +26,8 @@ from pydantic import BaseModel
 from xata.client import XataClient
 import psycopg2
 from langchain.llms import OpenAI
+from langchain.schema import AIMessage, HumanMessage, SystemMessage
+from langchain.chains.openai_functions import create_structured_output_chain
 
 llm_model = st.secrets["llm_model"]
 langchain_verbose = str(st.secrets["langchain_verbose"])
@@ -187,6 +190,137 @@ class SummarizeTool(BaseTool):
 
         return docs
 
+    def func_calling_chain(self):
+        func_calling_json_schema = {
+            "title": "get_querys_and_filters_to_search_database",
+            "description": "Extract the queries and filters for database searching",
+            "type": "object",
+            "properties": {
+                "query": {
+                    "title": "Query",
+                    "description": "Multiple queries extracted for a vector database semantic search from a chat history, separate queries with ",
+                    "type": "string",
+                },
+                "source": {
+                    "title": "Source Filter",
+                    "description": "Journal Name or Source extracted for a vector database semantic search, MUST be in upper case",
+                    "type": "string",
+                    "enum": [
+                        "AGRICULTURE, ECOSYSTEMS & ENVIRONMENT",
+                        "ANNUAL REVIEW OF ECOLOGY, EVOLUTION, AND SYSTEMATICS",
+                        "ANNUAL REVIEW OF ENVIRONMENT AND RESOURCES",
+                        "APPLIED CATALYSIS B: ENVIRONMENTAL",
+                        "BIOGEOSCIENCES",
+                        "BIOLOGICAL CONSERVATION",
+                        "BIOTECHNOLOGY ADVANCES",
+                        "CONSERVATION BIOLOGY",
+                        "CONSERVATION LETTERS",
+                        "CRITICAL REVIEWS IN ENVIRONMENTAL SCIENCE AND TECHNOLOGY",
+                        "DIVERSITY AND DISTRIBUTIONS",
+                        "ECOGRAPHY",
+                        "ECOLOGICAL APPLICATIONS",
+                        "ECOLOGICAL ECONOMICS",
+                        "ECOLOGICAL MONOGRAPHS",
+                        "ECOLOGY",
+                        "ECOLOGY LETTERS",
+                        "ECONOMIC SYSTEMS RESEARCH",
+                        "ECOSYSTEM HEALTH AND SUSTAINABILITY",
+                        "ECOSYSTEM SERVICES",
+                        "ECOSYSTEMS",
+                        "ENERGY & ENVIRONMENTAL SCIENCE",
+                        "ENVIRONMENT INTERNATIONAL",
+                        "ENVIRONMENTAL CHEMISTRY LETTERS",
+                        "ENVIRONMENTAL HEALTH PERSPECTIVES",
+                        "ENVIRONMENTAL POLLUTION",
+                        "ENVIRONMENTAL SCIENCE & TECHNOLOGY",
+                        "ENVIRONMENTAL SCIENCE & TECHNOLOGY LETTERS",
+                        "ENVIRONMENTAL SCIENCE AND ECOTECHNOLOGY",
+                        "ENVIRONMENTAL SCIENCE AND POLLUTION RESEARCH",
+                        "EVOLUTION",
+                        "FOREST ECOSYSTEMS",
+                        "FRONTIERS IN ECOLOGY AND THE ENVIRONMENT",
+                        "FRONTIERS OF ENVIRONMENTAL SCIENCE & ENGINEERING",
+                        "FUNCTIONAL ECOLOGY",
+                        "GLOBAL CHANGE BIOLOGY",
+                        "GLOBAL ECOLOGY AND BIOGEOGRAPHY",
+                        "GLOBAL ENVIRONMENTAL CHANGE",
+                        "INTERNATIONAL SOIL AND WATER CONSERVATION RESEARCH",
+                        "JOURNAL OF ANIMAL ECOLOGY",
+                        "JOURNAL OF APPLIED ECOLOGY",
+                        "JOURNAL OF BIOGEOGRAPHY",
+                        "JOURNAL OF CLEANER PRODUCTION",
+                        "JOURNAL OF ECOLOGY",
+                        "JOURNAL OF ENVIRONMENTAL INFORMATICS",
+                        "JOURNAL OF ENVIRONMENTAL MANAGEMENT",
+                        "JOURNAL OF HAZARDOUS MATERIALS",
+                        "JOURNAL OF INDUSTRIAL ECOLOGY",
+                        "JOURNAL OF PLANT ECOLOGY",
+                        "LANDSCAPE AND URBAN PLANNING",
+                        "LANDSCAPE ECOLOGY",
+                        "METHODS IN ECOLOGY AND EVOLUTION",
+                        "MICROBIOME",
+                        "MOLECULAR ECOLOGY",
+                        "NATURE",
+                        "NATURE CLIMATE CHANGE",
+                        "NATURE COMMUNICATIONS",
+                        "NATURE ECOLOGY & EVOLUTION",
+                        "NATURE ENERGY",
+                        "NATURE REVIEWS EARTH & ENVIRONMENT",
+                        "NATURE SUSTAINABILITY",
+                        "ONE EARTH",
+                        "PEOPLE AND NATURE",
+                        "PROCEEDINGS OF THE NATIONAL ACADEMY OF SCIENCES",
+                        "PROCEEDINGS OF THE ROYAL SOCIETY B: BIOLOGICAL SCIENCES",
+                        "RENEWABLE AND SUSTAINABLE ENERGY REVIEWS",
+                        "RESOURCES, CONSERVATION AND RECYCLING",
+                        "REVIEWS IN ENVIRONMENTAL SCIENCE AND BIO/TECHNOLOGY",
+                        "SCIENCE",
+                        "SCIENCE ADVANCES",
+                        "SCIENCE OF THE TOTAL ENVIRONMENT",
+                        "SCIENTIFIC DATA",
+                        "SUSTAINABLE CITIES AND SOCIETY",
+                        "SUSTAINABLE MATERIALS AND TECHNOLOGIES",
+                        "SUSTAINABLE PRODUCTION AND CONSUMPTION",
+                        "THE AMERICAN NATURALIST",
+                        "THE INTERNATIONAL JOURNAL OF LIFE CYCLE ASSESSMENT",
+                        "THE ISME JOURNAL",
+                        "THE LANCET PLANETARY HEALTH",
+                        "TRENDS IN ECOLOGY & EVOLUTION",
+                        "WASTE MANAGEMENT",
+                        "WATER RESEARCH",
+                    ],
+                },
+                "created_at": {
+                    "title": "Date Filter",
+                    "description": 'Date extracted for a vector database semantic search, in MongoDB\'s query and projection operators, in format like {"$gte": 1609459200.0, "$lte": 1640908800.0}',
+                    "type": "string",
+                },
+            },
+            "required": ["query"],
+        }
+
+        prompt_func_calling_msgs = [
+            SystemMessage(
+                content="You are a world class algorithm for extracting the all queries and filters from a chat history, for searching vector database. Given the user's story line, please extract and list all the key queries that need to be addressed. Each query should be independent and structured to facilitate separate searches in a vector database. Make ensure to provide multiple queries to fully cover the user's request. Make sure to answer in the correct structured format."
+            ),
+            HumanMessage(content="The chat history:"),
+            HumanMessagePromptTemplate.from_template("{input}"),
+        ]
+
+        prompt_func_calling = ChatPromptTemplate(messages=prompt_func_calling_msgs)
+
+        llm_func_calling = ChatOpenAI(model_name=llm_model, temperature=0, streaming=False)
+
+        func_calling_chain = create_structured_output_chain(
+            output_schema=func_calling_json_schema,
+            llm=llm_func_calling,
+            prompt=prompt_func_calling,
+            verbose=langchain_verbose,
+        )
+
+        return func_calling_chain
+
+
     def search_pinecone(self, query: str, filters: dict = {}, top_k: int = 16):
         """Search Pinecone index for documents similar to query."""
         if top_k == 0:
@@ -249,10 +383,26 @@ class SummarizeTool(BaseTool):
         ##search strategy 1: direct search pinecone
         query = "Dynamic material flow analysis"
         # filter = {"source": "JOURNAL OF INDUSTRIAL ECOLOGY"}
-        # uploaded_docs = self.fetch_uploaded_docs_vector(query=query, k=5)
-        # pinecone_docs = self.search_pinecone(query=query, top_k=10)
-        history=st.session_state["xata_history"].messages[-3:-1]
+
+        history=st.session_state["xata_history"].messages[-1].content
+        func_calling_response = self.func_calling_chain().run(history)
+        query = func_calling_response.get("query")
         current_query = st.session_state["xata_history"].messages[-1].content
+
+        try:
+            created_at = json.loads(
+                func_calling_response.get("created_at", None)
+            )
+        except TypeError:
+            created_at = None
+
+        source = func_calling_response.get("source", None)
+
+        filters = {}
+        if created_at:
+            filters["created_at"] = created_at
+        if source:
+            filters["source"] = source
 
         if history == []:
             uploaded_docs = self.fetch_uploaded_docs_vector(query=query, k=2)
