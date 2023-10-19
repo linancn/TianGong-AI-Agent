@@ -279,19 +279,25 @@ if auth:
 
     @utils.enable_chat_history
     def main():
-        if generate:
-            user_query = "Get information from uploaded documents."
+        user_query = st.chat_input(placeholder=ui.chat_human_placeholder)
+        if user_query:
+            history = st.session_state["xata_history"].messages[-2:-1]
+            # user_query = """Produce a detailed review on the topic of Dynamic Material Flow Analysis (DMFA). You must keep all details, and ensure that well-structured and organized, with a logical flow ofideas.
+            # """
+            input = f"""based on {history}, you must respond to the query: {user_query}"""
             human_message = HumanMessage(
                 content=user_query,
                 additional_kwargs={"id": st.session_state["username"]},
             )
             st.session_state["xata_history"].add_message(human_message)
 
+
+
             # response = summarize_docs()
             agent = main_agent
             response = agent().run(
                 {
-                    "input": user_query,
+                    "input": input
                 }
             )
 
