@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import json
@@ -21,7 +22,7 @@ from langchain.prompts import (
 )
 from langchain.schema.document import Document
 from langchain.tools import BaseTool
-from langchain.vectorstores import Pinecone
+from langchain.vectorstores import pinecone as Pinecone
 from pydantic import BaseModel
 from xata.client import XataClient
 import psycopg2
@@ -71,8 +72,10 @@ class SummarizeTool(BaseTool):
 
         # Define prompt
         prompt_template = """You must:
-        based on the following provided information and your own knowledge, provide a logical, clear, well-organized, and critically analyzed response to "{query}";
+        based on the following provided information (if any) and your own knowledge, provide a logical, clear, well-organized, and critically analyzed summary to "{query}";
         delve deep into the topic and provide an exhaustive answer;
+        ensure summary as detailed as possible;
+        ensure summary with detailed case studies and examples;
         give in-text citations where relevant in Author-Date mode, NOT in Numeric mode.
 
         UPLOADED INFO:
@@ -85,7 +88,7 @@ class SummarizeTool(BaseTool):
         include any duplicate or redundant information."""
 
         prompt = PromptTemplate(
-            input_variables=["query","uploaded_docs", "pinecone_docs"],
+            input_variables=["query", "uploaded_docs", "pinecone_docs"],
             template=prompt_template,
         )
 
@@ -96,17 +99,67 @@ class SummarizeTool(BaseTool):
         )
 
         return chain
-    
+
+    def review_chain(self):
+        langchain_verbose = st.secrets["langchain_verbose"]
+        openrouter_api_key = st.secrets["openrouter_api_key"]
+        openrouter_api_base = st.secrets["openrouter_api_base"]
+
+        selected_model = "anthropic/claude-2"
+        # selected_model = "openai/gpt-3.5-turbo-16k"
+        # selected_model = "openai/gpt-4-32k"
+        # selected_model = "meta-llama/llama-2-70b-chat"
+
+        llm_chat = ChatOpenAI(
+            model_name=selected_model,
+            temperature=0.9,
+            streaming=True,
+            verbose=langchain_verbose,
+            openai_api_key=openrouter_api_key,
+            openai_api_base=openrouter_api_base,
+            headers={"HTTP-Referer": "http://localhost"},
+            # callbacks=[],
+        )
+
+        # chain = load_summarize_chain(llm_chat, chain_type="stuff")
+
+        # Define prompt
+        prompt_template = """You a worldclass literature review writter. You must:
+        based on the following provided information and your own knowledge, provide a logical, clear, well-organized, and critically analyzed review to "{query}";
+        ensure multiple sections or paragraphs;
+        ensure each section and paragraph are fully discussed with detailed case studies and examples;
+        ensure review length longer than {length} words;
+        give in-text citations where relevant in Author-Date mode, NOT in Numeric mode.
+        You must not cut off at the end.
+
+        SUMMARIZED INFO FOR EACH SECTION OR PARAGRAPH:
+        {summary}.
+
+        COMPLETE REVIEW:"""
+
+        prompt = PromptTemplate(
+            input_variables=["query", "summary", "length"],
+            template=prompt_template,
+        )
+
+        chain = LLMChain(
+            llm=llm_chat,
+            prompt=prompt,
+            verbose=langchain_verbose,
+        )
+
+        return chain
+
     def refine_chain(self):
         llm_model = st.secrets["llm_model"]
         langchain_verbose = st.secrets["langchain_verbose"]
 
         llm_chat = ChatOpenAI(
-        model=llm_model,
-        temperature=0.7,
-        streaming=True,
-        verbose=langchain_verbose,
-        callbacks=[],
+            model=llm_model,
+            temperature=0.7,
+            streaming=True,
+            verbose=langchain_verbose,
+            callbacks=[],
         )
 
         # Define prompt
@@ -129,7 +182,7 @@ class SummarizeTool(BaseTool):
         include any duplicate or redundant information."""
 
         prompt = PromptTemplate(
-            input_variables=["current_query","sepcific_info", "history"],
+            input_variables=["current_query", "sepcific_info", "history"],
             template=prompt_template,
         )
 
@@ -190,7 +243,7 @@ class SummarizeTool(BaseTool):
 
         return docs
 
-    def func_calling_chain(self):
+    def outline_func_calling_chain(self):
         func_calling_json_schema = {
             "title": "get_querys_and_filters_to_search_database",
             "description": "Extract the queries and filters for database searching",
@@ -198,97 +251,13 @@ class SummarizeTool(BaseTool):
             "properties": {
                 "query": {
                     "title": "Query",
-                    "description": "Multiple queries extracted for a vector database semantic search from a chat history, separate queries with ",
+                    "description": "Multiple queries extracted for a vector database semantic search from a chat history, separate queries with a semicolon",
                     "type": "string",
                 },
-                "source": {
-                    "title": "Source Filter",
-                    "description": "Journal Name or Source extracted for a vector database semantic search, MUST be in upper case",
+                "length": {
+                    "title": "Request Review Length",
+                    "description": "The length of the review requested by the user, in words",
                     "type": "string",
-                    "enum": [
-                        "AGRICULTURE, ECOSYSTEMS & ENVIRONMENT",
-                        "ANNUAL REVIEW OF ECOLOGY, EVOLUTION, AND SYSTEMATICS",
-                        "ANNUAL REVIEW OF ENVIRONMENT AND RESOURCES",
-                        "APPLIED CATALYSIS B: ENVIRONMENTAL",
-                        "BIOGEOSCIENCES",
-                        "BIOLOGICAL CONSERVATION",
-                        "BIOTECHNOLOGY ADVANCES",
-                        "CONSERVATION BIOLOGY",
-                        "CONSERVATION LETTERS",
-                        "CRITICAL REVIEWS IN ENVIRONMENTAL SCIENCE AND TECHNOLOGY",
-                        "DIVERSITY AND DISTRIBUTIONS",
-                        "ECOGRAPHY",
-                        "ECOLOGICAL APPLICATIONS",
-                        "ECOLOGICAL ECONOMICS",
-                        "ECOLOGICAL MONOGRAPHS",
-                        "ECOLOGY",
-                        "ECOLOGY LETTERS",
-                        "ECONOMIC SYSTEMS RESEARCH",
-                        "ECOSYSTEM HEALTH AND SUSTAINABILITY",
-                        "ECOSYSTEM SERVICES",
-                        "ECOSYSTEMS",
-                        "ENERGY & ENVIRONMENTAL SCIENCE",
-                        "ENVIRONMENT INTERNATIONAL",
-                        "ENVIRONMENTAL CHEMISTRY LETTERS",
-                        "ENVIRONMENTAL HEALTH PERSPECTIVES",
-                        "ENVIRONMENTAL POLLUTION",
-                        "ENVIRONMENTAL SCIENCE & TECHNOLOGY",
-                        "ENVIRONMENTAL SCIENCE & TECHNOLOGY LETTERS",
-                        "ENVIRONMENTAL SCIENCE AND ECOTECHNOLOGY",
-                        "ENVIRONMENTAL SCIENCE AND POLLUTION RESEARCH",
-                        "EVOLUTION",
-                        "FOREST ECOSYSTEMS",
-                        "FRONTIERS IN ECOLOGY AND THE ENVIRONMENT",
-                        "FRONTIERS OF ENVIRONMENTAL SCIENCE & ENGINEERING",
-                        "FUNCTIONAL ECOLOGY",
-                        "GLOBAL CHANGE BIOLOGY",
-                        "GLOBAL ECOLOGY AND BIOGEOGRAPHY",
-                        "GLOBAL ENVIRONMENTAL CHANGE",
-                        "INTERNATIONAL SOIL AND WATER CONSERVATION RESEARCH",
-                        "JOURNAL OF ANIMAL ECOLOGY",
-                        "JOURNAL OF APPLIED ECOLOGY",
-                        "JOURNAL OF BIOGEOGRAPHY",
-                        "JOURNAL OF CLEANER PRODUCTION",
-                        "JOURNAL OF ECOLOGY",
-                        "JOURNAL OF ENVIRONMENTAL INFORMATICS",
-                        "JOURNAL OF ENVIRONMENTAL MANAGEMENT",
-                        "JOURNAL OF HAZARDOUS MATERIALS",
-                        "JOURNAL OF INDUSTRIAL ECOLOGY",
-                        "JOURNAL OF PLANT ECOLOGY",
-                        "LANDSCAPE AND URBAN PLANNING",
-                        "LANDSCAPE ECOLOGY",
-                        "METHODS IN ECOLOGY AND EVOLUTION",
-                        "MICROBIOME",
-                        "MOLECULAR ECOLOGY",
-                        "NATURE",
-                        "NATURE CLIMATE CHANGE",
-                        "NATURE COMMUNICATIONS",
-                        "NATURE ECOLOGY & EVOLUTION",
-                        "NATURE ENERGY",
-                        "NATURE REVIEWS EARTH & ENVIRONMENT",
-                        "NATURE SUSTAINABILITY",
-                        "ONE EARTH",
-                        "PEOPLE AND NATURE",
-                        "PROCEEDINGS OF THE NATIONAL ACADEMY OF SCIENCES",
-                        "PROCEEDINGS OF THE ROYAL SOCIETY B: BIOLOGICAL SCIENCES",
-                        "RENEWABLE AND SUSTAINABLE ENERGY REVIEWS",
-                        "RESOURCES, CONSERVATION AND RECYCLING",
-                        "REVIEWS IN ENVIRONMENTAL SCIENCE AND BIO/TECHNOLOGY",
-                        "SCIENCE",
-                        "SCIENCE ADVANCES",
-                        "SCIENCE OF THE TOTAL ENVIRONMENT",
-                        "SCIENTIFIC DATA",
-                        "SUSTAINABLE CITIES AND SOCIETY",
-                        "SUSTAINABLE MATERIALS AND TECHNOLOGIES",
-                        "SUSTAINABLE PRODUCTION AND CONSUMPTION",
-                        "THE AMERICAN NATURALIST",
-                        "THE INTERNATIONAL JOURNAL OF LIFE CYCLE ASSESSMENT",
-                        "THE ISME JOURNAL",
-                        "THE LANCET PLANETARY HEALTH",
-                        "TRENDS IN ECOLOGY & EVOLUTION",
-                        "WASTE MANAGEMENT",
-                        "WATER RESEARCH",
-                    ],
                 },
                 "created_at": {
                     "title": "Date Filter",
@@ -301,7 +270,7 @@ class SummarizeTool(BaseTool):
 
         prompt_func_calling_msgs = [
             SystemMessage(
-                content="You are a world class algorithm for extracting the all queries and filters from a chat history, for searching vector database. Given the user's story line, please extract and list all the key queries that need to be addressed. Each query should be independent and structured to facilitate separate searches in a vector database. Make ensure to provide multiple queries to fully cover the user's request. Make sure to answer in the correct structured format."
+                content="You are a world class algorithm for extracting the all queries and filters from a chat history, for searching vector database. Give the user's story line, extract and list all the key queries that need to be addressed for a review. Form a structured outline including methodology, application, limitations and future trend. Each query should be speccific, independent and structured to facilitate separate searches in a vector database. Make ensure to provide multiple queries to fully cover the user's request. Make sure to answer in the correct structured format."
             ),
             HumanMessage(content="The chat history:"),
             HumanMessagePromptTemplate.from_template("{input}"),
@@ -309,7 +278,9 @@ class SummarizeTool(BaseTool):
 
         prompt_func_calling = ChatPromptTemplate(messages=prompt_func_calling_msgs)
 
-        llm_func_calling = ChatOpenAI(model_name=llm_model, temperature=0, streaming=False)
+        llm_func_calling = ChatOpenAI(
+            model_name=llm_model, temperature=0, streaming=False
+        )
 
         func_calling_chain = create_structured_output_chain(
             output_schema=func_calling_json_schema,
@@ -320,6 +291,50 @@ class SummarizeTool(BaseTool):
 
         return func_calling_chain
 
+    def nextquery_func_calling_chain(self):
+        func_calling_json_schema = {
+            "title": "get_querys_and_filters_to_search_database",
+            "description": "Extract the queries and filters for database searching",
+            "type": "object",
+            "properties": {
+                "query": {
+                    "title": "Query",
+                    "description": "Next query extracted for a vector database semantic search from a chat history",
+                    "type": "string",
+                },
+                "created_at": {
+                    "title": "Date Filter",
+                    "description": 'Date extracted for a vector database semantic search, in MongoDB\'s query and projection operators, in format like {"$gte": 1609459200.0, "$lte": 1640908800.0}',
+                    "type": "string",
+                },
+            },
+            "required": ["query"],
+        }
+
+        prompt_func_calling_msgs = [
+            SystemMessage(
+                content="You are a world class algorithm for extracting a query and filters from a history, for searching vector database. According to the context text and the specific outline point, provide next query of a complete sentence for searching vector database. Make sure to answer in the correct structured format."
+            ),
+            HumanMessage(content="The context:"),
+            HumanMessagePromptTemplate.from_template("{contex}"),
+            HumanMessage(content="The next outline point:"),
+            HumanMessagePromptTemplate.from_template("{next_outline_point}"),
+        ]
+
+        prompt_func_calling = ChatPromptTemplate(messages=prompt_func_calling_msgs)
+
+        llm_func_calling = ChatOpenAI(
+            model_name=llm_model, temperature=0, streaming=False
+        )
+
+        func_calling_chain = create_structured_output_chain(
+            output_schema=func_calling_json_schema,
+            llm=llm_func_calling,
+            prompt=prompt_func_calling,
+            verbose=langchain_verbose,
+        )
+
+        return func_calling_chain
 
     def search_pinecone(self, query: str, filters: dict = {}, top_k: int = 16):
         """Search Pinecone index for documents similar to query."""
@@ -335,6 +350,7 @@ class SummarizeTool(BaseTool):
             index_name=os.environ["PINECONE_INDEX"],
             embedding=embeddings,
         )
+
         if filters:
             docs = vectorstore.similarity_search(query, k=top_k, filter=filters)
         else:
@@ -361,9 +377,9 @@ class SummarizeTool(BaseTool):
         conn_pg = psycopg2.connect(
             database="chat",
             user="postgres",
-            password= st.secrets("postgres_password"),
-            host= st.secrets("postgres_host"),
-            port= st.secrets("postgres_port"),
+            password=st.secrets("postgres_password"),
+            host=st.secrets("postgres_host"),
+            port=st.secrets("postgres_port"),
         )
         query = f"SELECT uuid FROM journals WHERE title LIKE '%dynamic material flow%'LIMIT 5"
         cursor = conn_pg.cursor()
@@ -381,50 +397,99 @@ class SummarizeTool(BaseTool):
 
         ###单链
         ##search strategy 1: direct search pinecone
-        query = "Dynamic material flow analysis"
+        # query = "Dynamic material flow analysis"
         # filter = {"source": "JOURNAL OF INDUSTRIAL ECOLOGY"}
-
-        history=st.session_state["xata_history"].messages[-1].content
-        func_calling_response = self.func_calling_chain().run(history)
-        query = func_calling_response.get("query")
-        current_query = st.session_state["xata_history"].messages[-1].content
+        latest_query = st.session_state["xata_history"].messages[-1].content
+        func_calling_outline = self.outline_func_calling_chain().run(latest_query)
+        query = func_calling_outline.get("query")
+        queries = query.split("; ")
+        nextquery_func_calling_chain = self.nextquery_func_calling_chain()
+        summary_chain = self.summary_chain()
+        review_chain = self.review_chain()
 
         try:
-            created_at = json.loads(
-                func_calling_response.get("created_at", None)
-            )
+            created_at = json.loads(func_calling_outline.get("created_at", None))
         except TypeError:
             created_at = None
 
-        source = func_calling_response.get("source", None)
+        length = func_calling_outline.get("length", None)
 
         filters = {}
         if created_at:
             filters["created_at"] = created_at
-        if source:
-            filters["source"] = source
 
+        try:
+            history = st.session_state["xata_history"].messages[-2].content
+        except IndexError:
+            history = []
+
+        summary_response = []
+        result = ""
         if history == []:
-            uploaded_docs = self.fetch_uploaded_docs_vector(query=query, k=2)
-            pinecone_docs = self.search_pinecone(query=query, top_k=2)
-            summary_chain = self.summary_chain()
-            response = summary_chain.run(
-                {"query": query,"uploaded_docs": uploaded_docs,"pinecone_docs": pinecone_docs},
+            for query in queries:
+                if summary_response == []:
+                    uploaded_docs = self.fetch_uploaded_docs_vector(query=query, k=2)
+                    pinecone_docs = self.search_pinecone(
+                        query=query, filters=filters, top_k=2
+                    )
+                    summary_response = summary_chain.run(
+                        {
+                            "query": query,
+                            "uploaded_docs": uploaded_docs,
+                            "pinecone_docs": pinecone_docs,
+                        },
+                    )
+                    result += summary_response
+                else:
+                    next_query = nextquery_func_calling_chain.run(
+                        {"contex": summary_response, "next_outline_point": query}
+                    ).get("query")
+                    new_uploaded_docs = self.fetch_uploaded_docs_vector(
+                        query=next_query, k=2
+                    )
+                    new_pinecone_docs = self.search_pinecone(
+                        query=next_query, filters=filters, top_k=2
+                    )
+                    summary_response = summary_chain.run(
+                        {
+                            "query": next_query,
+                            "uploaded_docs": new_uploaded_docs,
+                            "pinecone_docs": new_pinecone_docs,
+                        },
+                    )
+                    uploaded_docs.extend(new_uploaded_docs)
+                    pinecone_docs.extend(new_pinecone_docs)
+                    result += summary_response
+
+            response = review_chain.run(
+                {
+                    "query": latest_query,
+                    "summary": result,
+                    "length": length,
+                },
             )
             return response
+
         else:
             uploaded_docs = self.fetch_uploaded_docs_vector(query=query, k=2)
             pinecone_docs = self.search_pinecone(query=query, top_k=2)
             summary_chain = self.summary_chain()
             summary_response = summary_chain.run(
-                {"query": query,"uploaded_docs": uploaded_docs,"pinecone_docs": pinecone_docs},
+                {
+                    "query": query,
+                    "uploaded_docs": uploaded_docs,
+                    "pinecone_docs": pinecone_docs,
+                },
             )
             refine_chain = self.refine_chain()
             refine_response = refine_chain(
-                {"current_query": current_query,"sepcific_info": summary_response,"history": history},
+                {
+                    # "current_query": current_query,
+                    "sepcific_info": summary_response,
+                    "history": history,
+                },
             )
             return refine_response
-            
 
         ###search strategy 2: search title in postgres, then search related docs in pinecone
         # query = "Dynamic material flow analysis"
@@ -453,3 +518,34 @@ class SummarizeTool(BaseTool):
         self, query: str, run_manager: Optional[AsyncCallbackManagerForToolRun] = None
     ) -> str:
         """Use the tool asynchronously."""
+        # latest_query = st.session_state["xata_history"].messages[-1].content
+        func_calling_outline = self.outline_func_calling_chain().run(query)
+        response = func_calling_outline.get("query")
+        queries = response.split("; ")
+        summary_response = []
+
+        summary_chain = self.summary_chain()
+
+        tasks = [
+            summary_chain.arun(
+                {
+                    "query": query,
+                    "uploaded_docs": "",
+                    "pinecone_docs": "",
+                },
+            )
+            for query in queries
+        ]
+
+
+        # for query in queries:
+        #     if summary_response == []:
+        #         pinecone_docs = self.search_pinecone(query=query, top_k=2)
+        #         summary_response = summary_chain.run(
+        #             {
+        #                 "query": query,
+        #                 "uploaded_docs": uploaded_docs,
+        #                 "pinecone_docs": pinecone_docs,
+        #             },
+        #         )
+        #         result += summary_response
