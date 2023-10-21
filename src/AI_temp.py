@@ -279,12 +279,12 @@ if auth:
 
         generate = st.button("generate", key="generate", use_container_width=True)
 
-    async def run_call(agent: agent, query: str):
+    async def call_arun(agent, text):
+        tool = agent.tools[0]
+        result = await tool.arun(text)
+        return result
+    # now query
         await agent.acall(inputs={"input": query})
-
-    async def create_agent(agent, query):
-        task = asyncio.create_task(run_call(agent, query))
-        await task
 
     @utils.enable_chat_history
     def main():
@@ -303,8 +303,14 @@ if auth:
             st.session_state["xata_history"].add_message(human_message)
 
             # response = summarize_docs()
-            agent = main_agent
-            response = agent().acall({"input": input})
+            agent = main_agent()
+            response = asyncio.run(
+                call_arun(
+                    agent= agent,
+                    text=input,
+                )
+            )
+            # response = agent().acall({"input": input})
 
             ai_message = AIMessage(
                 content=response,

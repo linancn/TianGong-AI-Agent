@@ -22,7 +22,7 @@ from langchain.prompts import (
 )
 from langchain.schema.document import Document
 from langchain.tools import BaseTool
-from langchain.vectorstores import pinecone as Pinecone
+from langchain.vectorstores import Pinecone
 from pydantic import BaseModel
 from xata.client import XataClient
 import psycopg2
@@ -101,24 +101,15 @@ class SummarizeTool(BaseTool):
         return chain
 
     def review_chain(self):
+        llm_model = st.secrets["llm_model"]
         langchain_verbose = st.secrets["langchain_verbose"]
-        openrouter_api_key = st.secrets["openrouter_api_key"]
-        openrouter_api_base = st.secrets["openrouter_api_base"]
-
-        selected_model = "anthropic/claude-2"
-        # selected_model = "openai/gpt-3.5-turbo-16k"
-        # selected_model = "openai/gpt-4-32k"
-        # selected_model = "meta-llama/llama-2-70b-chat"
 
         llm_chat = ChatOpenAI(
-            model_name=selected_model,
-            temperature=0.9,
+            model=llm_model,
+            temperature=0.7,
             streaming=True,
             verbose=langchain_verbose,
-            openai_api_key=openrouter_api_key,
-            openai_api_base=openrouter_api_base,
-            headers={"HTTP-Referer": "http://localhost"},
-            # callbacks=[],
+            callbacks=[],
         )
 
         # chain = load_summarize_chain(llm_chat, chain_type="stuff")
@@ -194,7 +185,9 @@ class SummarizeTool(BaseTool):
 
         return chain
 
-    def fetch_uploaded_docs_vector(self, query: str, k: int = 16) -> list[Document]:
+    async def fetch_uploaded_docs_vector(
+        self, query: str, k: int = 16
+    ) -> list[Document]:
         """Fetch uploaded docs in similarity search."""
         username = st.session_state["username"]
         session_id = st.session_state["selected_chat_id"]
@@ -336,7 +329,7 @@ class SummarizeTool(BaseTool):
 
         return func_calling_chain
 
-    def search_pinecone(self, query: str, filters: dict = {}, top_k: int = 16):
+    async def search_pinecone(self, query: str, filters: dict = {}, top_k: int = 16):
         """Search Pinecone index for documents similar to query."""
         if top_k == 0:
             return []
@@ -518,6 +511,58 @@ class SummarizeTool(BaseTool):
         self, query: str, run_manager: Optional[AsyncCallbackManagerForToolRun] = None
     ) -> str:
         """Use the tool asynchronously."""
+        user_original_latest_query = (
+            st.session_state["xata_history"].messages[-1].content
+        )
+        func_calling_outline = self.outline_func_calling_chain().run(
+            user_original_latest_query
+        )
+        outline_response = func_calling_outline.get("query")
+        queries = outline_response.split("; ")
+        nextquery_func_calling_chain = self.nextquery_func_calling_chain()
+        summary_chain = self.summary_chain()
+        review_chain = self.review_chain()
+
+        try:
+            created_at = json.loads(func_calling_outline.get("created_at", None))
+        except TypeError:
+            created_at = None
+
+        length = func_calling_outline.get("length", None)
+
+        filters = {}
+        if created_at:
+            filters["created_at"] = created_at
+
+        try:
+            history = st.session_state["xata_history"].messages[-2].content
+        except IndexError:
+            history = []
+
+        summary_response = []
+        result = ""
+        if history == []:
+            pinecone_docs = await asyncio.gather(
+                *[
+                    self.search_pinecone(query=query, top_k=2)
+                    for query in queries
+                ]
+            )
+        summary_response = await asyncio.gather(
+            *[
+                summary_chain.arun(
+                    {
+                        "query": query,
+                        "uploaded_docs": "",
+                        "pinecone_docs": pinecone_doc,
+                    }
+                )
+                for query, pinecone_doc in zip(queries, pinecone_docs)
+            ]
+        )
+
+        
+
         # latest_query = st.session_state["xata_history"].messages[-1].content
         func_calling_outline = self.outline_func_calling_chain().run(query)
         response = func_calling_outline.get("query")
@@ -536,16 +581,3 @@ class SummarizeTool(BaseTool):
             )
             for query in queries
         ]
-
-
-        # for query in queries:
-        #     if summary_response == []:
-        #         pinecone_docs = self.search_pinecone(query=query, top_k=2)
-        #         summary_response = summary_chain.run(
-        #             {
-        #                 "query": query,
-        #                 "uploaded_docs": uploaded_docs,
-        #                 "pinecone_docs": pinecone_docs,
-        #             },
-        #         )
-        #         result += summary_response
