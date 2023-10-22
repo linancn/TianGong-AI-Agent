@@ -36,11 +36,19 @@ os.environ["PINECONE_API_KEY"] = st.secrets["pinecone_api_key"]
 os.environ["PINECONE_ENVIRONMENT"] = st.secrets["pinecone_environment"]
 os.environ["PINECONE_INDEX"] = st.secrets["pinecone_index"]
 os.environ["OPENAI_API_KEY"] = st.secrets["openai_api_key"]
+embeddings = OpenAIEmbeddings()
+pinecone.init(
+    api_key=os.environ["PINECONE_API_KEY"],
+    environment=os.environ["PINECONE_ENVIRONMENT"],
+)
+vectorstore = Pinecone.from_existing_index(
+    index_name=os.environ["PINECONE_INDEX"],
+    embedding=embeddings,
+)
 
-
-class SummarizeTool(BaseTool):
-    name = "summarize_tool"
-    description = "Search a vector database and return review according to the query. Craft a query optimized for a vector database search based on similarity metrics."
+class ReviewToolWithoutOutlines(BaseTool):
+    name = "review_tool_without_detailed_outlines"
+    description = "The ReviewToolWithoutOutlines is designed to streamline the review process, especially when users do not provide a detailed outline or only supply a few broad headings. In such cases, this tool takes the initiative to generate a comprehensive outline that captures the essence of the content to be reviewed. It then utilizes this outline as a guide to systematically search the knowledge base and other relevant sources, gathering pertinent information for each section of the outline. Finally, it integrates the gathered information to form a well-structured and insightful review. This approach ensures that the review is thorough, relevant, and tailored to the content, providing valuable insights for the user."
 
     class InputSchema(BaseModel):
         query: str
@@ -119,7 +127,7 @@ class SummarizeTool(BaseTool):
         based on the following provided information and your own knowledge, provide a logical, clear, well-organized, and critically analyzed review to "{query}";
         ensure multiple sections or paragraphs;
         ensure each section and paragraph are fully discussed with detailed case studies and examples;
-        ensure review length longer than {length} words;
+        ensure review length longer than {length} words if user request;
         give in-text citations where relevant in Author-Date mode, NOT in Numeric mode.
         You must not cut off at the end.
 
@@ -263,7 +271,7 @@ class SummarizeTool(BaseTool):
 
         prompt_func_calling_msgs = [
             SystemMessage(
-                content="You are a world class algorithm for extracting the all queries and filters from a chat history, for searching vector database. Give the user's story line, extract and list all the key queries that need to be addressed for a review. Form a structured outline including methodology, application, limitations and future trend. Each query should be speccific, independent and structured to facilitate separate searches in a vector database. Make ensure to provide multiple queries to fully cover the user's request. Make sure to answer in the correct structured format."
+                content="You are a world class algorithm for extracting the all queries and filters from a chat history, for searching vector database. Give the user's story line, extract and list all the key queries that need to be addressed for a review. Each query should be speccific, independent and structured to facilitate separate searches in a vector database. Make ensure to provide multiple queries to fully cover the user's request. Make sure to answer in the correct structured format."
             ),
             HumanMessage(content="The chat history:"),
             HumanMessagePromptTemplate.from_template("{input}"),
@@ -334,16 +342,6 @@ class SummarizeTool(BaseTool):
         if top_k == 0:
             return []
 
-        embeddings = OpenAIEmbeddings()
-        pinecone.init(
-            api_key=os.environ["PINECONE_API_KEY"],
-            environment=os.environ["PINECONE_ENVIRONMENT"],
-        )
-        vectorstore = Pinecone.from_existing_index(
-            index_name=os.environ["PINECONE_INDEX"],
-            embedding=embeddings,
-        )
-
         if filters:
             docs = vectorstore.similarity_search(query, k=top_k, filter=filters)
         else:
@@ -392,8 +390,8 @@ class SummarizeTool(BaseTool):
         ##search strategy 1: direct search pinecone
         # query = "Dynamic material flow analysis"
         # filter = {"source": "JOURNAL OF INDUSTRIAL ECOLOGY"}
-        latest_query = st.session_state["xata_history"].messages[-1].content
-        func_calling_outline = self.outline_func_calling_chain().run(latest_query)
+        user_original_latest_query = st.session_state["xata_history"].messages[-1].content
+        func_calling_outline = self.outline_func_calling_chain().run(user_original_latest_query)
         query = func_calling_outline.get("query")
         queries = query.split("; ")
         nextquery_func_calling_chain = self.nextquery_func_calling_chain()
@@ -511,73 +509,4 @@ class SummarizeTool(BaseTool):
         self, query: str, run_manager: Optional[AsyncCallbackManagerForToolRun] = None
     ) -> str:
         """Use the tool asynchronously."""
-        user_original_latest_query = (
-            st.session_state["xata_history"].messages[-1].content
-        )
-        func_calling_outline = self.outline_func_calling_chain().run(
-            user_original_latest_query
-        )
-        outline_response = func_calling_outline.get("query")
-        queries = outline_response.split("; ")
-        nextquery_func_calling_chain = self.nextquery_func_calling_chain()
-        summary_chain = self.summary_chain()
-        review_chain = self.review_chain()
-
-        try:
-            created_at = json.loads(func_calling_outline.get("created_at", None))
-        except TypeError:
-            created_at = None
-
-        length = func_calling_outline.get("length", None)
-
-        filters = {}
-        if created_at:
-            filters["created_at"] = created_at
-
-        try:
-            history = st.session_state["xata_history"].messages[-2].content
-        except IndexError:
-            history = []
-
-        summary_response = []
-        result = ""
-        if history == []:
-            pinecone_docs = await asyncio.gather(
-                *[
-                    self.search_pinecone(query=query, top_k=2)
-                    for query in queries
-                ]
-            )
-        summary_response = await asyncio.gather(
-            *[
-                summary_chain.arun(
-                    {
-                        "query": query,
-                        "uploaded_docs": "",
-                        "pinecone_docs": pinecone_doc,
-                    }
-                )
-                for query, pinecone_doc in zip(queries, pinecone_docs)
-            ]
-        )
-
-        
-
-        # latest_query = st.session_state["xata_history"].messages[-1].content
-        func_calling_outline = self.outline_func_calling_chain().run(query)
-        response = func_calling_outline.get("query")
-        queries = response.split("; ")
-        summary_response = []
-
-        summary_chain = self.summary_chain()
-
-        tasks = [
-            summary_chain.arun(
-                {
-                    "query": query,
-                    "uploaded_docs": "",
-                    "pinecone_docs": "",
-                },
-            )
-            for query in queries
-        ]
+      

@@ -283,8 +283,7 @@ if auth:
         tool = agent.tools[0]
         result = await tool.arun(text)
         return result
-    # now query
-        await agent.acall(inputs={"input": query})
+
 
     @utils.enable_chat_history
     def main():

@@ -1,7 +1,7 @@
 import asyncio
 import os
 import streamlit as st
-import test_summarize_tool
+import modules.tools.review_tool_with_outlines as review_tool_with_outlines
 
 os.environ["OPENAI_API_KEY"] = st.secrets["openai_api_key"]
 
@@ -11,7 +11,7 @@ async def call_arun(tool, text):
     return result
 
 
-summarize_tool = test_summarize_tool.SummarizeTool()
+summarize_tool = review_tool_with_outlines.SummarizeTool()
 result = asyncio.run(
     call_arun(
         summarize_tool,
