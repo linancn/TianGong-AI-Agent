@@ -1,8 +1,10 @@
+import asyncio
 import os
 import time
 from datetime import datetime
 
 import streamlit as st
+from langchain.agents import agent
 from langchain.callbacks import StreamlitCallbackHandler
 from langchain.schema import AIMessage, HumanMessage
 from streamlit.web.server.websocket_headers import _get_websocket_headers
@@ -10,9 +12,9 @@ from streamlit.web.server.websocket_headers import _get_websocket_headers
 import modules.ui.ui_config as ui_config
 import modules.ui.utils as utils
 from modules.agents.memory.agent_history import xata_chat_history
-from modules.tools.test_summarize import summarize_docs
 from modules.agents.test_summarize_agent import main_agent
 from modules.sensitivity.sensitivity_checker import check_text_sensitivity
+from modules.tools.test_summarize import summarize_docs
 from modules.ui.utils import (
     check_password,
     clear_embedding_files,
@@ -277,10 +279,22 @@ if auth:
 
         generate = st.button("generate", key="generate", use_container_width=True)
 
+    async def call_arun(agent, text):
+        tool = agent.tools[0]
+        result = await tool.arun(text)
+        return result
+
+
     @utils.enable_chat_history
     def main():
-        if generate:
-            user_query = "Get information from uploaded documents."
+        user_query = st.chat_input(placeholder=ui.chat_human_placeholder)
+        if user_query:
+            history = st.session_state["xata_history"].messages[-2:-1]
+            # user_query = """Produce a detailed review on the topic of Dynamic Material Flow Analysis (DMFA). You must keep all details, and ensure that well-structured and organized, with a logical flow ofideas.
+            # """
+            input = (
+                f"""based on {history}, you must respond to the query: {user_query}"""
+            )
             human_message = HumanMessage(
                 content=user_query,
                 additional_kwargs={"id": st.session_state["username"]},
@@ -288,12 +302,14 @@ if auth:
             st.session_state["xata_history"].add_message(human_message)
 
             # response = summarize_docs()
-            agent = main_agent
-            response = agent().run(
-                {
-                    "input": user_query,
-                }
+            agent = main_agent()
+            response = asyncio.run(
+                call_arun(
+                    agent= agent,
+                    text=input,
+                )
             )
+            # response = agent().acall({"input": input})
 
             ai_message = AIMessage(
                 content=response,
