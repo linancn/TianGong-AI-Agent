@@ -57,9 +57,9 @@ class ReviewToolWithDetailedOutlines(BaseTool):
         openrouter_api_key = st.secrets["openrouter_api_key"]
         openrouter_api_base = st.secrets["openrouter_api_base"]
 
-        selected_model = "anthropic/claude-2"
+        # selected_model = "anthropic/claude-2"
         # selected_model = "openai/gpt-3.5-turbo-16k"
-        # selected_model = "openai/gpt-4-32k"
+        selected_model = "openai/gpt-4-32k"
         # selected_model = "meta-llama/llama-2-70b-chat"
 
         llm_chat = ChatOpenAI(
@@ -77,20 +77,20 @@ class ReviewToolWithDetailedOutlines(BaseTool):
 
         # Define prompt
         prompt_template = """You must:
-        based on the following provided information (if any) and your own knowledge, provide a logical, clear, well-organized, and critically analyzed summary to "{query}";
+        based on the following provided information (if any) and your own knowledge, provide a logical, clear, well-organized, and critically analyzed review to "{query}";
         delve deep into the topic and provide an exhaustive answer;
-        ensure summary as detailed as possible;
-        ensure summary with detailed case studies and examples;
+        ensure review as detailed as possible;
+        ensure response longer than 2000 words;
+        ensure each section or paragraph with detailed case studies and examples;
         give in-text citations where relevant in Author-Date mode, NOT in Numeric mode.
 
         UPLOADED INFO:
         "{uploaded_docs}".
 
-        KNOWLEDGE BASE:
+        KNOWLEDGE BASE Search Results:
         "{pinecone_docs}".
 
-        You must not:
-        include any duplicate or redundant information."""
+        """
 
         prompt = PromptTemplate(
             input_variables=["query", "uploaded_docs", "pinecone_docs"],
@@ -124,11 +124,11 @@ class ReviewToolWithDetailedOutlines(BaseTool):
         based on the following provided information and your own knowledge, provide a logical, clear, well-organized, and critically analyzed review to "{query}";
         ensure multiple sections or paragraphs;
         ensure each section and paragraph are fully discussed with detailed case studies and examples;
-        ensure review length longer than {length} words if user request;
+        ensure review length longer than {length} words as user request;
         give in-text citations where relevant in Author-Date mode, NOT in Numeric mode.
         You must not cut off at the end.
 
-        SUMMARIZED INFO FOR EACH SECTION OR PARAGRAPH:
+        SUMMARIZED INFO:
         {summary}.
 
         COMPLETE REVIEW:"""
@@ -221,7 +221,7 @@ class ReviewToolWithDetailedOutlines(BaseTool):
         return docs_list
 
     async def search_uploaded_docs(
-        self, query: str, k: int = 16
+        self, query: str, top_k: int = 16
     ) -> list[Document]:
         """Fetch uploaded docs in similarity search."""
         username = st.session_state["username"]
@@ -237,7 +237,7 @@ class ReviewToolWithDetailedOutlines(BaseTool):
                     "queryVector": query_vector,  # array of floats
                     "column": "embedding",  # column name,
                     "similarityFunction": "cosineSimilarity",  # space function
-                    "size": k,  # number of results to return
+                    "size": top_k,  # number of results to return
                     "filter": {
                         "username": username,
                         "sessionId": session_id,
@@ -314,29 +314,38 @@ class ReviewToolWithDetailedOutlines(BaseTool):
         except IndexError:
             history = []
 
+        k=25
         summary_response = []
         if history == []:
             pinecone_docs = await asyncio.gather(
-                *[self.search_pinecone(query=query, top_k=2) for query in queries]
+                *[self.search_pinecone(query=query, top_k=k) for query in queries]
             )
-            uploaded_docs = await asyncio.gather(
-                *[
-                    self.search_uploaded_docs(query=query, top_k=2)
-                    for query in queries
-                ]
+            # uploaded_docs = await asyncio.gather(
+            #     *[
+            #         self.search_uploaded_docs(query=query, top_k=k)
+            #         for query in queries
+            #     ]
+            # )
+
+            summary_response = summary_chain.run(
+                {
+                    "query": user_original_latest_query,
+                    "uploaded_docs": "",
+                    "pinecone_docs": pinecone_docs
+                },
             )
-            summary_response = await asyncio.gather(
-                *[
-                    summary_chain.arun(
-                        {
-                            "query": query,
-                            "uploaded_docs": uploaded_docs,
-                            "pinecone_docs": pinecone_doc,
-                        }
-                    )
-                    for query, pinecone_doc in zip(queries, pinecone_docs)
-                ]
-            )
+            # summary_response = await asyncio.gather(
+            #     *[
+            #         summary_chain.arun(
+            #             {
+            #                 "query": query,
+            #                 "uploaded_docs": "",
+            #                 "pinecone_docs": pinecone_doc,
+            #             }
+            #         )
+            #         for query, pinecone_doc in zip(queries, pinecone_docs)
+            #     ]
+            # )
             response = review_chain.run(
                 {
                     "query": user_original_latest_query,
