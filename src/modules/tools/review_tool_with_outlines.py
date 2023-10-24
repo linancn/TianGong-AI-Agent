@@ -1,5 +1,4 @@
 import asyncio
-import getpass
 import json
 import os
 from typing import Optional, Type
@@ -28,24 +27,18 @@ from langchain.tools import BaseTool
 from langchain.vectorstores import Pinecone
 from pydantic import BaseModel
 from xata.client import XataClient
+from src.modules.ui.search_pinecone import SearchPinecone
+from langchain.llms.bedrock import Bedrock
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 llm_model = st.secrets["llm_model"]
 langchain_verbose = str(st.secrets["langchain_verbose"])
-os.environ["PINECONE_API_KEY"] = st.secrets["pinecone_api_key"]
-os.environ["PINECONE_ENVIRONMENT"] = st.secrets["pinecone_environment"]
-os.environ["PINECONE_INDEX"] = st.secrets["pinecone_index"]
 os.environ["OPENAI_API_KEY"] = st.secrets["openai_api_key"]
 os.environ["COHERE_API_KEY"] = st.secrets["cohere_api_key"]
+co = cohere.Client(os.environ["COHERE_API_KEY"])
 
 embeddings = OpenAIEmbeddings()
-pinecone.init(
-    api_key=os.environ["PINECONE_API_KEY"],
-    environment=os.environ["PINECONE_ENVIRONMENT"],
-)
-vectorstore = Pinecone.from_existing_index(
-    index_name=os.environ["PINECONE_INDEX"],
-    embedding=embeddings,
-)
+search_pinecone = SearchPinecone()
 
 
 class ReviewToolWithDetailedOutlines(BaseTool):
@@ -58,24 +51,31 @@ class ReviewToolWithDetailedOutlines(BaseTool):
     args_schema: Type[BaseModel] = InputSchema
 
     def summary_chain(self):
-        langchain_verbose = st.secrets["langchain_verbose"]
-        openrouter_api_key = st.secrets["openrouter_api_key"]
-        openrouter_api_base = st.secrets["openrouter_api_base"]
+        # langchain_verbose = st.secrets["langchain_verbose"]
+        # openrouter_api_key = st.secrets["openrouter_api_key"]
+        # openrouter_api_base = st.secrets["openrouter_api_base"]
 
-        # selected_model = "anthropic/claude-2"
-        # selected_model = "openai/gpt-3.5-turbo-16k"
-        selected_model = "openai/gpt-4-32k"
-        # selected_model = "meta-llama/llama-2-70b-chat"
+        # # selected_model = "anthropic/claude-2"
+        # # selected_model = "openai/gpt-3.5-turbo-16k"
+        # selected_model = "openai/gpt-4-32k"
+        # # selected_model = "meta-llama/llama-2-70b-chat"
 
-        llm_chat = ChatOpenAI(
-            model_name=selected_model,
-            temperature=0.9,
-            streaming=True,
-            verbose=langchain_verbose,
-            openai_api_key=openrouter_api_key,
-            openai_api_base=openrouter_api_base,
-            headers={"HTTP-Referer": "http://localhost"},
-            # callbacks=[],
+        # llm_chat = ChatOpenAI(
+        #     model_name=selected_model,
+        #     temperature=0,
+        #     streaming=True,
+        #     verbose=langchain_verbose,
+        #     openai_api_key=openrouter_api_key,
+        #     openai_api_base=openrouter_api_base,
+        #     headers={"HTTP-Referer": "http://localhost"},
+        #     # callbacks=[],
+        # )
+
+        llm_chat = Bedrock(
+            credentials_profile_name="default",
+            model_id="anthropic.claude-v2",
+            streaming=False,
+            model_kwargs={"max_tokens_to_sample": 2048, "temperature": 0},
         )
 
         # chain = load_summarize_chain(llm_chat, chain_type="stuff")
@@ -202,33 +202,6 @@ class ReviewToolWithDetailedOutlines(BaseTool):
 
         return func_calling_chain
 
-    async def search_pinecone(self, query: str, filters: dict = {}, top_k: int = 16):
-        """Search Pinecone index for documents similar to query."""
-        if top_k == 0:
-            return []
-
-        if filters:
-            docs = vectorstore.similarity_search(query, k=top_k, filter=filters)
-        else:
-            # docs = vectorstore.similarity_search(query, k=top_k)
-            docs = vectorstore.max_marginal_relevance_search(query, k=top_k)
-
-        docs_list = []
-        for doc in docs:
-            # date = datetime.fromtimestamp(doc.metadata["created_at"])
-            # formatted_date = date.strftime("%Y-%m")  # Format date as 'YYYY-MM'
-            # source_entry = "[{}. {}. {}. {}.]({})".format(
-            #     doc.metadata["source_id"],
-            #     doc.metadata["source"],
-            #     doc.metadata["author"],
-            #     formatted_date,
-            #     doc.metadata["url"],
-            # )
-            # docs_list.append({"content": doc.page_content, "source": source_entry})
-            docs_list.append(doc.page_content)
-
-        return docs_list
-
     async def search_uploaded_docs(self, query: str, top_k: int = 16) -> list[Document]:
         """Fetch uploaded docs in similarity search."""
         username = st.session_state["username"]
@@ -266,6 +239,16 @@ class ReviewToolWithDetailedOutlines(BaseTool):
             docs.append(page_content)
 
         return docs
+
+    async def async_rerank(query, content, top_k: int = 20):
+        response = await co.rerank(
+            model="rerank-english-v2.0",
+            query=query,
+            documents=content,
+            top_n=top_k,
+        )
+        result = [result.document["text"] for result in response.results]
+        return result
 
     def search_postgres(self):
         # 连接到 PostgreSQL 数据库
@@ -320,12 +303,15 @@ class ReviewToolWithDetailedOutlines(BaseTool):
         except IndexError:
             history = []
 
-        k = 40
+        k = 60
         rerank_response = []
         summary_response = []
         if history == []:
             pinecone_docs = await asyncio.gather(
-                *[self.search_pinecone(query=query, top_k=k) for query in queries]
+                *[
+                    search_pinecone.async_similarity(query=query, top_k=k)
+                    for query in queries
+                ]
             )
             # uploaded_docs = await asyncio.gather(
             #     *[
@@ -333,22 +319,28 @@ class ReviewToolWithDetailedOutlines(BaseTool):
             #         for query in queries
             #     ]
             # )
-            
-            co = cohere.Client(os.environ["COHERE_API_KEY"])
-            
-            for index, pinecone_doc in enumerate(pinecone_docs):
-                docs = []
-                for doc in pinecone_doc:
-                    docs.append({"text": doc})
+            pinecone_contents = [
+                [item["content"] for item in sublist] for sublist in pinecone_docs
+            ]
+
+            # 同步调用
+            for index, pinecone_content in enumerate(pinecone_contents):
                 response = co.rerank(
-                    model = 'rerank-english-v2.0',
-                    query = queries[index],
-                    documents = docs,
-                    top_n = 20,
-                    )
+                    model="rerank-english-v2.0",
+                    query=queries[index],
+                    documents=pinecone_content,
+                    top_n=30,
+                )
                 result = [result.document["text"] for result in response.results]
                 rerank_response.extend(result)
 
+            # 异步调用
+            # results = await asyncio.gather(
+            #     *[
+            #         self.async_rerank(query = unique_query, content = pinecone_content)
+            #         for unique_query, pinecone_content in zip(queries, pinecone_contents)
+            #     ]
+            # )
 
             summary_response = summary_chain.run(
                 {

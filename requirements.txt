@@ -1,4 +1,5 @@
 arxiv
+boto3
 cohere
 duckduckgo-search
 faiss-cpu
