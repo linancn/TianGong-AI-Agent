@@ -1,4 +1,5 @@
 arxiv
+cohere
 duckduckgo-search
 faiss-cpu
 fastapi

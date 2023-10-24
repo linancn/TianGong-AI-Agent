@@ -1,7 +1,10 @@
 import asyncio
+import getpass
 import json
 import os
 from typing import Optional, Type
+
+import cohere
 
 import pinecone
 import psycopg2
@@ -32,6 +35,8 @@ os.environ["PINECONE_API_KEY"] = st.secrets["pinecone_api_key"]
 os.environ["PINECONE_ENVIRONMENT"] = st.secrets["pinecone_environment"]
 os.environ["PINECONE_INDEX"] = st.secrets["pinecone_index"]
 os.environ["OPENAI_API_KEY"] = st.secrets["openai_api_key"]
+os.environ["COHERE_API_KEY"] = st.secrets["cohere_api_key"]
+
 embeddings = OpenAIEmbeddings()
 pinecone.init(
     api_key=os.environ["PINECONE_API_KEY"],
@@ -76,12 +81,15 @@ class ReviewToolWithDetailedOutlines(BaseTool):
         # chain = load_summarize_chain(llm_chat, chain_type="stuff")
 
         # Define prompt
-        prompt_template = """You must:
-        based on the following provided information (if any) and your own knowledge, provide a logical, clear, well-organized, and critically analyzed review to "{query}";
+        prompt_template = """You a worldclass literature review writter. You must:
+        based on the following provided information and your own knowledge, provide a logical, clear, well-organized, and critically analyzed review to respond the query:
+        "{query}". 
+        You must:
         delve deep into the topic and provide an exhaustive answer;
         ensure review as detailed as possible;
-        ensure response longer than 2000 words;
-        ensure each section or paragraph with detailed case studies and examples;
+        ensure each section and paragraph are fully discussed with detailed case studies and examples;
+        use multiple case studies or examples to support and enrich your arguments;
+        ensure review length longer than {length} words as user request;
         give in-text citations where relevant in Author-Date mode, NOT in Numeric mode.
 
         UPLOADED INFO:
@@ -93,7 +101,7 @@ class ReviewToolWithDetailedOutlines(BaseTool):
         """
 
         prompt = PromptTemplate(
-            input_variables=["query", "uploaded_docs", "pinecone_docs"],
+            input_variables=["query", "length", "uploaded_docs", "pinecone_docs"],
             template=prompt_template,
         )
 
@@ -202,7 +210,8 @@ class ReviewToolWithDetailedOutlines(BaseTool):
         if filters:
             docs = vectorstore.similarity_search(query, k=top_k, filter=filters)
         else:
-            docs = vectorstore.similarity_search(query, k=top_k)
+            # docs = vectorstore.similarity_search(query, k=top_k)
+            docs = vectorstore.max_marginal_relevance_search(query, k=top_k)
 
         docs_list = []
         for doc in docs:
@@ -220,9 +229,7 @@ class ReviewToolWithDetailedOutlines(BaseTool):
 
         return docs_list
 
-    async def search_uploaded_docs(
-        self, query: str, top_k: int = 16
-    ) -> list[Document]:
+    async def search_uploaded_docs(self, query: str, top_k: int = 16) -> list[Document]:
         """Fetch uploaded docs in similarity search."""
         username = st.session_state["username"]
         session_id = st.session_state["selected_chat_id"]
@@ -296,7 +303,6 @@ class ReviewToolWithDetailedOutlines(BaseTool):
         outline_response = func_calling_outline.get("query")
         queries = outline_response.split("; ")
         summary_chain = self.summary_chain()
-        review_chain = self.review_chain()
 
         try:
             created_at = json.loads(func_calling_outline.get("created_at", None))
@@ -314,7 +320,8 @@ class ReviewToolWithDetailedOutlines(BaseTool):
         except IndexError:
             history = []
 
-        k=25
+        k = 40
+        rerank_response = []
         summary_response = []
         if history == []:
             pinecone_docs = await asyncio.gather(
@@ -326,12 +333,29 @@ class ReviewToolWithDetailedOutlines(BaseTool):
             #         for query in queries
             #     ]
             # )
+            
+            co = cohere.Client(os.environ["COHERE_API_KEY"])
+            
+            for index, pinecone_doc in enumerate(pinecone_docs):
+                docs = []
+                for doc in pinecone_doc:
+                    docs.append({"text": doc})
+                response = co.rerank(
+                    model = 'rerank-english-v2.0',
+                    query = queries[index],
+                    documents = docs,
+                    top_n = 20,
+                    )
+                result = [result.document["text"] for result in response.results]
+                rerank_response.extend(result)
+
 
             summary_response = summary_chain.run(
                 {
                     "query": user_original_latest_query,
+                    "length": length,
                     "uploaded_docs": "",
-                    "pinecone_docs": pinecone_docs
+                    "pinecone_docs": rerank_response,
                 },
             )
             # summary_response = await asyncio.gather(
@@ -346,13 +370,13 @@ class ReviewToolWithDetailedOutlines(BaseTool):
             #         for query, pinecone_doc in zip(queries, pinecone_docs)
             #     ]
             # )
-            response = review_chain.run(
-                {
-                    "query": user_original_latest_query,
-                    "summary": summary_response,
-                    "length": length,
-                },
-            )
-            return response
+            # response = review_chain.run(
+            #     {
+            #         "query": user_original_latest_query,
+            #         "summary": summary_response,
+            #         "length": length,
+            #     },
+            # )
+            return summary_response
         else:
             return "Go for RefineTool."
