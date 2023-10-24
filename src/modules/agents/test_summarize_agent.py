@@ -3,7 +3,7 @@ from langchain.agents import AgentType, initialize_agent
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chat_models import ChatOpenAI
 from ..tools.review_tool_with_outlines import ReviewToolWithDetailedOutlines
-from ..tools.review_tool_without_outlines import ReviewToolWithoutOutlines
+# from ..tools.review_tool_without_outlines import ReviewToolWithoutOutlines
 
 # from ..tools.test_outline_tool import ReviewOutlineTool
 
@@ -22,7 +22,7 @@ def main_agent():
 
     tools = [
         # ReviewOutlineTool(),
-        ReviewToolWithoutOutlines(),
+        # ReviewToolWithoutOutlines(),
         ReviewToolWithDetailedOutlines(),
     ]
 

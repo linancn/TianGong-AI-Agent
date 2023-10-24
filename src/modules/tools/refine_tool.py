@@ -193,7 +193,7 @@ class ReviewToolWithoutOutlines(BaseTool):
 
         return chain
 
-    async def fetch_uploaded_docs_vector(
+    def fetch_uploaded_docs_vector(
         self, query: str, k: int = 16
     ) -> list[Document]:
         """Fetch uploaded docs in similarity search."""
@@ -255,11 +255,6 @@ class ReviewToolWithoutOutlines(BaseTool):
                     "description": "Multiple queries extracted for a vector database semantic search from a chat history, separate queries with a semicolon",
                     "type": "string",
                 },
-                "length": {
-                    "title": "Request Review Length",
-                    "description": "The length of the review requested by the user, in words",
-                    "type": "string",
-                },
                 "created_at": {
                     "title": "Date Filter",
                     "description": 'Date extracted for a vector database semantic search, in MongoDB\'s query and projection operators, in format like {"$gte": 1609459200.0, "$lte": 1640908800.0}',
@@ -271,9 +266,9 @@ class ReviewToolWithoutOutlines(BaseTool):
 
         prompt_func_calling_msgs = [
             SystemMessage(
-                content="You are a world class algorithm for extracting the all queries and filters from a chat history, for searching vector database. Give the user's story line, extract and list all the key queries that need to be addressed for a review. Each query should be speccific, independent and structured to facilitate separate searches in a vector database. Make ensure to provide multiple queries to fully cover the user's request. Make sure to answer in the correct structured format."
+                content="You are a world class algorithm for extracting the all queries and filters from a chat history, for searching vector database. Give the initial overview of the topic, extract and list all the key queries that need to be addressed for a full review. Each query should be speccific, independent and structured to facilitate separate searches in a vector database. Make ensure to provide multiple queries to fully cover the user's request. Make sure to answer in the correct structured format."
             ),
-            HumanMessage(content="The chat history:"),
+            HumanMessage(content="The initial overview:"),
             HumanMessagePromptTemplate.from_template("{input}"),
         ]
 
@@ -337,7 +332,7 @@ class ReviewToolWithoutOutlines(BaseTool):
 
         return func_calling_chain
 
-    async def search_pinecone(self, query: str, filters: dict = {}, top_k: int = 16):
+    def search_pinecone(self, query: str, filters: dict = {}, top_k: int = 16):
         """Search Pinecone index for documents similar to query."""
         if top_k == 0:
             return []
@@ -390,20 +385,28 @@ class ReviewToolWithoutOutlines(BaseTool):
         ##search strategy 1: direct search pinecone
         # query = "Dynamic material flow analysis"
         # filter = {"source": "JOURNAL OF INDUSTRIAL ECOLOGY"}
-        user_original_latest_query = st.session_state["xata_history"].messages[-1].content
-        func_calling_outline = self.outline_func_calling_chain().run(user_original_latest_query)
-        query = func_calling_outline.get("query")
-        queries = query.split("; ")
         nextquery_func_calling_chain = self.nextquery_func_calling_chain()
         summary_chain = self.summary_chain()
         review_chain = self.review_chain()
+
+        uploaded_docs = self.fetch_uploaded_docs_vector(query=query, k=2)
+        pinecone_docs = self.search_pinecone(
+                        query=query, top_k=2
+                    )
+        overview_response = summary_chain.run({"query": query,"uploaded_docs": uploaded_docs,"pinecone_docs": pinecone_docs})
+        func_calling_outline = self.outline_func_calling_chain().run(overview_response)
+        query = func_calling_outline.get("query")
+        queries = query.split("; ")
+
+        user_original_latest_query = st.session_state["xata_history"].messages[-1].content
+
+
 
         try:
             created_at = json.loads(func_calling_outline.get("created_at", None))
         except TypeError:
             created_at = None
 
-        length = func_calling_outline.get("length", None)
 
         filters = {}
         if created_at:
