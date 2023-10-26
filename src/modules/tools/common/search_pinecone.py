@@ -64,7 +64,7 @@ class SearchPinecone:
                 response = index.fetch(ids=ids)
                 adjacent_docs = response["vectors"]
                 processed_adjacent_docs = [
-                    {"id": key, "metadata": value["metadata"]}
+                    {"id": key, "metadata": {"text": value["metadata"].get("text")}}
                     for key, value in adjacent_docs.items()
                 ]
                 processed_adjacent_docs.append(doc)
