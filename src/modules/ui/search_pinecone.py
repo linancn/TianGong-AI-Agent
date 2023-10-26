@@ -83,3 +83,10 @@ class SearchPinecone:
 
     def sync_mmr(self, query: str, filters: dict = {}, top_k: int = 16):
         return asyncio.run(self.async_mmr(query, filters, top_k))
+    
+    def get_contentslist(self, docs):
+        """Get a list of contents from docs."""   
+        contents = [
+                [item["content"] for item in sublist] for sublist in docs
+            ]
+        return contents

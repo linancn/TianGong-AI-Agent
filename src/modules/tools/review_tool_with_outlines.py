@@ -5,7 +5,6 @@ from typing import Optional, Type
 
 import cohere
 
-import pinecone
 import psycopg2
 import streamlit as st
 from langchain.callbacks.manager import (
@@ -24,12 +23,10 @@ from langchain.prompts import (
 from langchain.schema import HumanMessage, SystemMessage
 from langchain.schema.document import Document
 from langchain.tools import BaseTool
-from langchain.vectorstores import Pinecone
 from pydantic import BaseModel
 from xata.client import XataClient
 from src.modules.ui.search_pinecone import SearchPinecone
 from langchain.llms.bedrock import Bedrock
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 llm_model = st.secrets["llm_model"]
 langchain_verbose = str(st.secrets["langchain_verbose"])
@@ -202,51 +199,16 @@ class ReviewToolWithDetailedOutlines(BaseTool):
 
         return func_calling_chain
 
-    async def search_uploaded_docs(self, query: str, top_k: int = 16) -> list[Document]:
-        """Fetch uploaded docs in similarity search."""
-        username = st.session_state["username"]
-        session_id = st.session_state["selected_chat_id"]
-        embeddings = OpenAIEmbeddings()
-        query_vector = embeddings.embed_query(query)
-        results = (
-            XataClient()
-            .data()
-            .vector_search(
-                "tiangong_chunks",
-                {
-                    "queryVector": query_vector,  # array of floats
-                    "column": "embedding",  # column name,
-                    "similarityFunction": "cosineSimilarity",  # space function
-                    "size": top_k,  # number of results to return
-                    "filter": {
-                        "username": username,
-                        "sessionId": session_id,
-                    },  # filter expression
-                },
-            )
-        )
-
-        docs = []
-        for record in results["records"]:
-            page_content = record["content"]
-            # metadata = {
-            #     "source": record["source"],
-            # }
-            # doc = Document(
-            #     page_content=page_content,
-            #     metadata=metadata,
-            # )
-            docs.append(page_content)
-
-        return docs
-
-    async def async_rerank(query, content, top_k: int = 20):
-        response = await co.rerank(
-            model="rerank-english-v2.0",
-            query=query,
-            documents=content,
-            top_n=top_k,
-        )
+    async def async_rerank(self, query, content, top_k: int = 20):
+        loop = asyncio.get_running_loop()
+        response = await loop.run_in_executor(
+        None, 
+        co.rerank,
+        "rerank-english-v2.0",
+        query,
+        content,
+        top_k
+    )
         result = [result.document["text"] for result in response.results]
         return result
 
@@ -319,9 +281,7 @@ class ReviewToolWithDetailedOutlines(BaseTool):
             #         for query in queries
             #     ]
             # )
-            pinecone_contents = [
-                [item["content"] for item in sublist] for sublist in pinecone_docs
-            ]
+            pinecone_contents = search_pinecone.get_contentslist(pinecone_docs)
 
             # 同步调用
             for index, pinecone_content in enumerate(pinecone_contents):
