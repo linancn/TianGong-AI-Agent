@@ -24,9 +24,7 @@ class SearchPinecone:
             embedding=self.embeddings,
         )
 
-    async def async_similarity(
-        self, query: str, filters: dict = {}, top_k: int = 16
-    ):
+    async def async_similarity(self, query: str, filters: dict = {}, top_k: int = 16):
         """Search Pinecone with similarity score."""
         if top_k == 0:
             return []
@@ -54,15 +52,15 @@ class SearchPinecone:
     def sync_similarity(self, query: str, filters: dict = {}, top_k: int = 16):
         return asyncio.run(self.async_similarity(query, filters, top_k))
 
-    async def async_mmr(
-        self, query: str, filters: dict = {}, top_k: int = 16
-    ):
+    async def async_mmr(self, query: str, filters: dict = {}, top_k: int = 16):
         """Search Pinecone with maximal marginal relevance method."""
         if top_k == 0:
             return []
 
         if filters:
-            docs = self.vectorstore.max_marginal_relevance_search(query, k=top_k, filter=filters)
+            docs = self.vectorstore.max_marginal_relevance_search(
+                query, k=top_k, filter=filters
+            )
         else:
             docs = self.vectorstore.max_marginal_relevance_search(query, k=top_k)
 
@@ -83,10 +81,8 @@ class SearchPinecone:
 
     def sync_mmr(self, query: str, filters: dict = {}, top_k: int = 16):
         return asyncio.run(self.async_mmr(query, filters, top_k))
-    
+
     def get_contentslist(self, docs):
-        """Get a list of contents from docs."""   
-        contents = [
-                [item["content"] for item in sublist] for sublist in docs
-            ]
+        """Get a list of contents from docs."""
+        contents = [[item["content"] for item in sublist] for sublist in docs]
         return contents

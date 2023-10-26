@@ -4,8 +4,6 @@ import os
 from typing import Optional, Type
 
 import cohere
-
-import psycopg2
 import streamlit as st
 from langchain.callbacks.manager import (
     AsyncCallbackManagerForToolRun,
@@ -15,6 +13,7 @@ from langchain.chains.llm import LLMChain
 from langchain.chains.openai_functions import create_structured_output_chain
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings import OpenAIEmbeddings
+from langchain.llms.bedrock import Bedrock
 from langchain.prompts import (
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
@@ -25,8 +24,8 @@ from langchain.schema.document import Document
 from langchain.tools import BaseTool
 from pydantic import BaseModel
 from xata.client import XataClient
-from src.modules.ui.search_pinecone import SearchPinecone
-from langchain.llms.bedrock import Bedrock
+
+from src.modules.tools.common.search_pinecone import SearchPinecone
 
 llm_model = st.secrets["llm_model"]
 langchain_verbose = str(st.secrets["langchain_verbose"])
@@ -199,36 +198,22 @@ class ReviewToolWithDetailedOutlines(BaseTool):
 
         return func_calling_chain
 
-    async def async_rerank(self, query, content, top_k: int = 20):
-        loop = asyncio.get_running_loop()
-        response = await loop.run_in_executor(
-        None, 
-        co.rerank,
-        "rerank-english-v2.0",
-        query,
-        content,
-        top_k
-    )
-        result = [result.document["text"] for result in response.results]
-        return result
-
-    def search_postgres(self):
-        # 连接到 PostgreSQL 数据库
-        conn_pg = psycopg2.connect(
-            database="chat",
-            user="postgres",
-            password=st.secrets("postgres_password"),
-            host=st.secrets("postgres_host"),
-            port=st.secrets("postgres_port"),
-        )
-        query = f"SELECT uuid FROM journals WHERE title LIKE '%dynamic material flow%'LIMIT 5"
-        cursor = conn_pg.cursor()
-        cursor.execute(query)
-        results = cursor.fetchall()
-        cursor.close()
-        conn_pg.close()
-        uuid_for_filter = [item[0] for item in results]
-        return uuid_for_filter
+    # def search_postgres(self):
+    #     conn_pg = psycopg2.connect(
+    #         database="chat",
+    #         user="postgres",
+    #         password=st.secrets("postgres_password"),
+    #         host=st.secrets("postgres_host"),
+    #         port=st.secrets("postgres_port"),
+    #     )
+    #     query = f"SELECT uuid FROM journals WHERE title LIKE '%dynamic material flow%'LIMIT 5"
+    #     cursor = conn_pg.cursor()
+    #     cursor.execute(query)
+    #     results = cursor.fetchall()
+    #     cursor.close()
+    #     conn_pg.close()
+    #     uuid_for_filter = [item[0] for item in results]
+    #     return uuid_for_filter
 
     def _run(
         self, query: str, run_manager: Optional[CallbackManagerForToolRun] = None
@@ -283,7 +268,6 @@ class ReviewToolWithDetailedOutlines(BaseTool):
             # )
             pinecone_contents = search_pinecone.get_contentslist(pinecone_docs)
 
-            # 同步调用
             for index, pinecone_content in enumerate(pinecone_contents):
                 response = co.rerank(
                     model="rerank-english-v2.0",
@@ -293,14 +277,6 @@ class ReviewToolWithDetailedOutlines(BaseTool):
                 )
                 result = [result.document["text"] for result in response.results]
                 rerank_response.extend(result)
-
-            # 异步调用
-            # results = await asyncio.gather(
-            #     *[
-            #         self.async_rerank(query = unique_query, content = pinecone_content)
-            #         for unique_query, pinecone_content in zip(queries, pinecone_contents)
-            #     ]
-            # )
 
             summary_response = summary_chain.run(
                 {

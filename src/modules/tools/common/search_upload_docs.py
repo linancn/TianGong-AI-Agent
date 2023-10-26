@@ -1,13 +1,10 @@
-
-
 import streamlit as st
 from langchain.embeddings import OpenAIEmbeddings
-from xata.client import XataClient
 from langchain.schema.document import Document
+from xata.client import XataClient
 
 
 class SearchUploadedDocs:
-
     async def search_uploaded_docs(self, query: str, top_k: int = 16) -> list[Document]:
         """Fetch uploaded docs in similarity search."""
         username = st.session_state["username"]
