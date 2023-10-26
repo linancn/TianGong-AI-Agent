@@ -62,17 +62,18 @@ class SearchPinecone:
                 ]
 
                 response = index.fetch(ids=ids)
-                adjacent_docs =response["vectors"]
-                processed_adjacent_docs = [{'id': key, 'metadata': value['metadata']} for key, value in adjacent_docs.items()]
+                adjacent_docs = response["vectors"]
+                processed_adjacent_docs = [
+                    {"id": key, "metadata": value["metadata"]}
+                    for key, value in adjacent_docs.items()
+                ]
                 processed_adjacent_docs.append(doc)
-                
-                sorted_docs = sorted(adjacent_docs, key=lambda doc: doc["id"])
 
-
-
-                text_list = [doc["metadata"]["text"]]
-
-
+                sorted_docs = sorted(
+                    processed_adjacent_docs, key=lambda x: int(x["id"].split("_")[-1])
+                )
+                texts = [item["metadata"]["text"] for item in sorted_docs]
+                doc["metadata"]["text"] = " ".join(texts)
 
         docs_list = []
         for doc in docs:
