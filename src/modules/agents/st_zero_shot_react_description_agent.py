@@ -9,9 +9,10 @@ from langchain.agents import AgentType, initialize_agent
 from langchain.chat_models import ChatOpenAI
 from langchain.tools.python.tool import PythonREPLTool
 
+from ..tools.search_arxiv_tool import SearchArxivTool
+from ..tools.search_google_patents_tool import SearchGooglePatentsTool
 from ..tools.search_internet_tool import SearchInternetTool
 from ..tools.search_vectordb_tool import SearchVectordbTool
-from ..tools.search_arxiv_tool import SearchArxivTool
 from ..tools.search_wikipedia_tool import SearchWikipediaTool
 from ..tools.st_search_uploaded_docs_tool import STSearchUploadedDocsTool
 
@@ -32,6 +33,7 @@ def main_agent():
         SearchVectordbTool(),
         SearchArxivTool(),
         SearchWikipediaTool(),
+        SearchGooglePatentsTool(),
         STSearchUploadedDocsTool(),
         PythonREPLTool(),
     ]
