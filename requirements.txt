@@ -4,6 +4,7 @@ cohere
 duckduckgo-search
 faiss-cpu
 fastapi
+google-cloud-bigquery
 gTTS
 Jinja2
 langchain

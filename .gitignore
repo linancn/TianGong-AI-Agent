@@ -151,3 +151,5 @@ ris
 .streamlit/secrets.toml
 
 README_prod.md
+
+test/*.txt
