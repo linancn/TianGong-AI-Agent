@@ -218,7 +218,7 @@ xata_db_url = "YourURL"
 
 ```bash
 export ui=tiangong-en
-streamlit run AI.py
+streamlit run src/AI.py
 ```
 
 Or Using VsCode Debug Streamlit Config
