@@ -8,8 +8,7 @@ google-cloud-bigquery
 gTTS
 Jinja2
 langchain
-openai
-pandas
+openai==0.28.1
 pdfplumber
 pinecone-client
 sphinx
