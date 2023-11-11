@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import toml
 
-ui_config_file = f"""src.ui.{os.environ.get("ui",default="tiangong-en")}"""
+ui_config_file = f"""ui.{os.environ.get("ui",default="tiangong-en")}"""
 config_module = importlib.import_module(ui_config_file)
 ui_data = config_module.ui_data
 
