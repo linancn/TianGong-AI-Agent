@@ -17,7 +17,7 @@ sphinx-rtd-theme
 streamlit
 tenacity
 tiktoken
-unstructured[local-inference]
+unstructured[all-docs]
 uvicorn[standard]
 websockets
 wikipedia

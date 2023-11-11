@@ -153,3 +153,5 @@ ris
 README_prod.md
 
 test/*.txt
+
+data/**
